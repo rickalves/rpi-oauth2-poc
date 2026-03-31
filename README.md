@@ -15,14 +15,14 @@ Dois objetivos em um único repositório:
 
 ## Stack do Produto
 
-| Camada | Tecnologia |
-|--------|-----------|
-| Framework | Next.js 14+ (App Router) |
-| Autenticação | Auth.js v5 (NextAuth) |
+| Camada         | Tecnologia                        |
+| -------------- | --------------------------------- |
+| Framework      | Next.js 16.2 (App Router)         |
+| Autenticação   | Auth.js v5 (NextAuth)             |
 | Banco de dados | MongoDB + `@auth/mongodb-adapter` |
-| Linguagem | TypeScript |
-| Estilo | Tailwind CSS |
-| Provedores | Google OAuth2, GitHub OAuth |
+| Linguagem      | TypeScript                        |
+| Estilo         | Tailwind CSS 4                    |
+| Provedores     | Google OAuth2, GitHub OAuth       |
 
 ---
 
@@ -32,12 +32,12 @@ Dois objetivos em um único repositório:
 Request → /rpi:research → /rpi:plan → /rpi:implement
 ```
 
-| Fase | Comando | Output |
-|------|---------|--------|
-| Request | (descrição livre) | `rpi/{feature}/REQUEST.md` |
-| Research | `/rpi:research` | `research/RESEARCH.md` + veredicto GO/NO-GO |
-| Plan | `/rpi:plan` | `plan/PLAN.md`, `pm.md`, `ux.md`, `eng.md` |
-| Implement | `/rpi:implement` | código + `implement/IMPLEMENT.md` |
+| Fase      | Comando           | Output                                      |
+| --------- | ----------------- | ------------------------------------------- |
+| Request   | (descrição livre) | `rpi/{feature}/REQUEST.md`                  |
+| Research  | `/rpi:research`   | `research/RESEARCH.md` + veredicto GO/NO-GO |
+| Plan      | `/rpi:plan`       | `plan/PLAN.md`, `pm.md`, `ux.md`, `eng.md`  |
+| Implement | `/rpi:implement`  | código + `implement/IMPLEMENT.md`           |
 
 Todos os artefatos de cada feature ficam em `rpi/{feature-slug}/`.
 
@@ -52,9 +52,36 @@ Todos os artefatos de cada feature ficam em `rpi/{feature-slug}/`.
 rpi/
 └── oauth2-authentication/
     ├── REQUEST.md               # Descrição e decisões técnicas
-    └── research/
-        └── RESEARCH.md          # Análise de viabilidade (veredicto: GO)
-rpi-workflow.md                  # Documentação do workflow RPI
+    ├── research/
+    │   └── RESEARCH.md          # Análise de viabilidade (veredicto: GO)
+    ├── plan/
+    │   ├── PLAN.md              # Plano de implementação (17 tarefas, 4 fases)
+    │   ├── pm.md                # Requisitos e histórias de usuário
+    │   ├── ux.md                # Fluxos e especificações de UI
+    │   └── eng.md               # Arquitetura técnica e especificações de componentes
+    └── implement/
+        └── IMPLEMENT.md         # Log de implementação e arquivos criados
+src/
+├── auth.ts                      # Config central Auth.js (providers, adapter, callbacks)
+├── proxy.ts                     # Edge proxy — proteção de rotas (/dashboard)
+├── lib/
+│   └── mongodb.ts               # Singleton MongoClient
+├── types/
+│   └── next-auth.d.ts           # Augmentações TypeScript (Session.user.id, JWT)
+├── app/
+│   ├── api/auth/[...nextauth]/  # Route handler Auth.js
+│   ├── login/page.tsx           # Página de login pública
+│   ├── dashboard/page.tsx       # Página protegida (Server Component)
+│   ├── layout.tsx               # Layout raiz com SessionProvider
+│   └── page.tsx                 # Landing page
+└── components/
+    ├── header.tsx               # Header com estado de autenticação
+    └── providers/
+        └── session-provider.tsx # Wrapper 'use client' do SessionProvider
+tests/
+└── phase1/
+    └── setup.test.ts            # 24 testes de aceitação (Fase 1) — todos passando
+rpi-workflow.md                      # Documentação do workflow RPI
 ```
 
 ---
@@ -94,9 +121,21 @@ Acesse `http://localhost:3000`.
 
 ## Status
 
-| Fase RPI | Status |
-|----------|--------|
-| Request | ✅ Concluído |
-| Research | ✅ Concluído — Veredicto: GO |
-| Plan | 🔄 Em andamento |
-| Implement | ⏳ Pendente |
+### Workflow RPI
+
+| Fase RPI  | Status                         |
+| --------- | ------------------------------ |
+| Request   | ✅ Concluído                   |
+| Research  | ✅ Concluído — Veredicto: GO   |
+| Plan      | ✅ Concluído                   |
+| Implement | ✅ Concluído — 17/17 tarefas   |
+
+### Qualidade (oauth2-authentication)
+
+| Gate                              | Resultado                    |
+| --------------------------------- | ---------------------------- |
+| TypeScript (`npm run type-check`) | ✅ 0 erros                    |
+| Lint (`npm run lint`)             | ✅ 0 erros, 0 warnings        |
+| Format (`npm run format:check`)   | ✅ Todos os arquivos formatados |
+| Testes Fase 1 (`npm test`)        | ✅ 24/24 passando             |
+| Testes Fase 2–4                  | ⏳ Pendente                   |

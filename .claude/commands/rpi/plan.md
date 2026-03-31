@@ -16,6 +16,7 @@ You **MUST** parse the user input to extract the feature slug (the folder name i
 This command creates comprehensive planning documentation for a feature request. It generates detailed specifications, technical design, and implementation plans in the feature's RPI folder.
 
 **Prerequisites**:
+
 - Feature folder exists at `rpi/{feature-slug}/`
 - Research completed with GO recommendation (`rpi/{feature-slug}/research/RESEARCH.md` exists)
 
@@ -41,6 +42,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Prerequisites**: Feature slug provided
 
 **Process**:
+
 1. **Verify research completed**:
    - Check `rpi/{feature-slug}/research/RESEARCH.md` exists
    - Verify GO recommendation (warn if NO-GO or CONDITIONAL)
@@ -56,11 +58,13 @@ This command creates comprehensive planning documentation for a feature request.
    - Extract relevant constraints and preferences
 
 **Outputs**:
+
 - Research summary
 - Constitutional context (if found)
 - Planning constraints
 
 **Validation**:
+
 - [ ] Research report exists
 - [ ] GO recommendation confirmed
 - [ ] Constitution loaded (if exists)
@@ -72,6 +76,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Prerequisites**: Phase 0 complete
 
 **Process**:
+
 1. **Parse Feature Description** from research report:
    - Extract feature name and primary goal
    - Identify target component(s)
@@ -90,11 +95,13 @@ This command creates comprehensive planning documentation for a feature request.
    - Identify reusable code and patterns
 
 **Outputs**:
+
 - Feature scope document (internal)
 - Affected components list
 - Existing patterns catalog
 
 **Validation**:
+
 - [ ] Feature name and goal clearly defined
 - [ ] Target component(s) identified
 - [ ] Feature complexity assessed
@@ -106,6 +113,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Prerequisites**: Phase 1 complete
 
 **Process**:
+
 1. **Review Component Architecture**:
    - Read component README and documentation
    - Review existing code structure
@@ -130,12 +138,14 @@ This command creates comprehensive planning documentation for a feature request.
    - Data migration needs
 
 **Outputs**:
+
 - Technical requirements document (internal)
 - Dependency map
 - Integration point diagram
 - Risk assessment
 
 **Validation**:
+
 - [ ] Component architecture understood
 - [ ] All dependencies identified
 - [ ] Integration points mapped
@@ -150,6 +160,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Agent**: senior-software-engineer
 
 **Process**:
+
 1. **Design High-Level Architecture**:
    - Component/module structure
    - Data flow diagrams
@@ -179,12 +190,14 @@ This command creates comprehensive planning documentation for a feature request.
    - End-to-end test cases
 
 **Outputs**:
+
 - Architecture design document (internal)
 - API specifications
 - Database schema design
 - Testing strategy
 
 **Validation**:
+
 - [ ] High-level architecture designed
 - [ ] Implementation approach defined
 - [ ] Database changes planned (if needed)
@@ -198,6 +211,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Prerequisites**: Phases 1-3 complete
 
 **Process**:
+
 1. **Identify Implementation Phases**:
    - Break feature into 3-5 logical phases
    - Each phase should deliver working, testable functionality
@@ -220,12 +234,14 @@ This command creates comprehensive planning documentation for a feature request.
    - Independent module development
 
 **Outputs**:
+
 - Phased implementation plan
 - Task breakdown with estimates
 - Success criteria per phase
 - Dependency chart
 
 **Validation**:
+
 - [ ] Feature broken into 3-5 logical phases
 - [ ] Each phase has specific tasks
 - [ ] All tasks have complexity estimates
@@ -241,6 +257,7 @@ This command creates comprehensive planning documentation for a feature request.
 **Agent**: documentation-analyst-writer (via Task tool)
 
 **Process**:
+
 1. **Generate pm.md** (Product Requirements):
    - Feature description and user stories
    - Constitutional alignment (if applicable)
@@ -271,12 +288,14 @@ This command creates comprehensive planning documentation for a feature request.
    - Validation checkpoints
 
 **Output Files** (all saved to `rpi/{feature-slug}/plan/`):
+
 - `pm.md` - Product requirements
 - `ux.md` - UX design
 - `eng.md` - Technical specification
 - `PLAN.md` - Detailed implementation roadmap
 
 **Validation**:
+
 - [ ] All 4 files present (pm, ux, eng, PLAN)
 - [ ] pm.md covers business requirements
 - [ ] ux.md addresses user experience
@@ -291,22 +310,24 @@ This command creates comprehensive planning documentation for a feature request.
 
 This command orchestrates specialist agents:
 
-| Phase | Agent | Type | Purpose |
-|-------|-------|------|---------|
-| Phase 3 | senior-software-engineer | Custom | Architecture design |
-| Phase 5 | product-manager | Custom | Product requirements (pm.md) |
-| Phase 5 | ux-designer | Custom | User experience (ux.md) |
-| Phase 5 | senior-software-engineer | Custom | Technical spec (eng.md) |
-| Phase 5 | documentation-analyst-writer | Built-in | Documentation synthesis |
+| Phase   | Agent                        | Type     | Purpose                      |
+| ------- | ---------------------------- | -------- | ---------------------------- |
+| Phase 3 | senior-software-engineer     | Custom   | Architecture design          |
+| Phase 5 | product-manager              | Custom   | Product requirements (pm.md) |
+| Phase 5 | ux-designer                  | Custom   | User experience (ux.md)      |
+| Phase 5 | senior-software-engineer     | Custom   | Technical spec (eng.md)      |
+| Phase 5 | documentation-analyst-writer | Built-in | Documentation synthesis      |
 
 ### Agent Invocation
 
 **Custom Agents** (product-manager, senior-software-engineer, ux-designer):
+
 - Claude Code automatically detects these from `.claude/agents/`
 - Reference them naturally: "Acting as the senior-software-engineer agent..."
 - NO Task tool invocation needed
 
 **Built-in Agent** (documentation-analyst-writer):
+
 - Use Task tool with `subagent_type="documentation-analyst-writer"`
 
 ---
@@ -320,6 +341,7 @@ Report the following on successful completion:
 **Documentation Folder**: `rpi/{feature-slug}/plan/`
 
 Files created:
+
 - **pm.md**: Product requirements and user stories ({Y} stories)
 - **ux.md**: User experience design ({Z} flows)
 - **eng.md**: Technical specification ({A} APIs, {B} schema changes)
@@ -347,7 +369,7 @@ Files created:
 1. **Phase 1**: {phase-name} - {task-count} tasks
 2. **Phase 2**: {phase-name} - {task-count} tasks
 3. **Phase 3**: {phase-name} - {task-count} tasks
-[Continue for all phases...]
+   [Continue for all phases...]
 
 ---
 
@@ -373,18 +395,22 @@ Files created:
 ## Error Handling
 
 **If research report doesn't exist**:
+
 - Action: Stop and inform user
 - Message: "Research report not found. Run `/rpi:research` first."
 
 **If research recommendation is NO-GO**:
+
 - Action: Warn user but allow proceeding
 - Message: "Research recommended NO-GO. Proceed anyway? (y/n)"
 
 **If target component doesn't exist**:
+
 - Action: Confirm with user if this is a new component
 - Message: "Component not found. Is this a new component?"
 
 **If documentation agent fails**:
+
 - Action: Generate documentation directly
 - Warning: "Documentation may not fully adhere to standards"
 
@@ -396,6 +422,7 @@ Files created:
 - **Part of RPI Workflow**: Step 3 of 4 (Describe → Research → Plan → Implement)
 
 **Best Practices**:
+
 1. **Review Research First**: Ensure you understand the viability assessment
 2. **Leverage Discovery**: Use technical discovery from research phase
 3. **Be Specific**: Detailed plans lead to smoother implementation

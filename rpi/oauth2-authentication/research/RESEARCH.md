@@ -15,16 +15,16 @@ After completing a rigorous 5-phase research pipeline — requirement parsing, p
 
 ## 2. Feature Overview
 
-| Attribute | Value |
-|---|---|
-| **Feature Name** | OAuth2 Authentication (Google + GitHub) |
-| **Feature Type** | Security / Authentication |
-| **Target Component** | Full-stack (Auth infrastructure, UI, Middleware) |
-| **Complexity** | Simple (configuration-driven; revised down from initial Medium) |
-| **Scope** | Social login only — Google and GitHub OAuth2 providers. No email/password. |
-| **Stack** | Next.js 14+ App Router, TypeScript, Tailwind CSS, Auth.js v5, MongoDB |
-| **Implementation Plan** | 17 steps across 4 phases (Setup, Infrastructure, UI, Security/Polish) |
-| **Architecture** | 13 files total, following Auth.js v5 conventions exactly |
+| Attribute               | Value                                                                      |
+| ----------------------- | -------------------------------------------------------------------------- |
+| **Feature Name**        | OAuth2 Authentication (Google + GitHub)                                    |
+| **Feature Type**        | Security / Authentication                                                  |
+| **Target Component**    | Full-stack (Auth infrastructure, UI, Middleware)                           |
+| **Complexity**          | Simple (configuration-driven; revised down from initial Medium)            |
+| **Scope**               | Social login only — Google and GitHub OAuth2 providers. No email/password. |
+| **Stack**               | Next.js 14+ App Router, TypeScript, Tailwind CSS, Auth.js v5, MongoDB      |
+| **Implementation Plan** | 17 steps across 4 phases (Setup, Infrastructure, UI, Security/Polish)      |
+| **Architecture**        | 13 files total, following Auth.js v5 conventions exactly                   |
 
 ---
 
@@ -93,11 +93,11 @@ This feature **blocks all user-specific features**. Nothing that requires knowin
 
 The standard OAuth2 flow is well-understood by users: **2–3 clicks** from landing page to authenticated state.
 
-| Step | Action |
-|---|---|
-| 1 | User clicks "Sign in with Google" or "Sign in with GitHub" |
-| 2 | User authorizes on provider consent screen |
-| 3 | User is redirected back, fully authenticated |
+| Step | Action                                                     |
+| ---- | ---------------------------------------------------------- |
+| 1    | User clicks "Sign in with Google" or "Sign in with GitHub" |
+| 2    | User authorizes on provider consent screen                 |
+| 3    | User is redirected back, fully authenticated               |
 
 **Recommended UX Improvements** (not blockers, can be deferred):
 
@@ -107,10 +107,10 @@ The standard OAuth2 flow is well-understood by users: **2–3 clicks** from land
 
 ### Product Concerns
 
-| Concern | Severity | Notes |
-|---|---|---|
-| No automated tests planned for v1 | Medium | Acceptable for initial launch; must be addressed post-launch (P0) |
-| Account linking behavior needs verification | Low | What happens when same email exists across Google and GitHub? Auth.js handles this, but behavior should be verified |
+| Concern                                     | Severity | Notes                                                                                                               |
+| ------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| No automated tests planned for v1           | Medium   | Acceptable for initial launch; must be addressed post-launch (P0)                                                   |
+| Account linking behavior needs verification | Low      | What happens when same email exists across Google and GitHub? Auth.js handles this, but behavior should be verified |
 
 ---
 
@@ -118,14 +118,14 @@ The standard OAuth2 flow is well-understood by users: **2–3 clicks** from land
 
 ### Current Codebase State: GREENFIELD
 
-| Check | Result |
-|---|---|
-| `package.json` | Does not exist |
-| `tsconfig.json` | Does not exist |
-| Application source files | None |
-| Existing auth implementation | None |
-| Existing database setup | None |
-| Conflicting dependencies | None |
+| Check                        | Result         |
+| ---------------------------- | -------------- |
+| `package.json`               | Does not exist |
+| `tsconfig.json`              | Does not exist |
+| Application source files     | None           |
+| Existing auth implementation | None           |
+| Existing database setup      | None           |
+| Conflicting dependencies     | None           |
 
 **Assessment**: This is a **clean-slate** implementation. There are zero existing files, zero conflicts, and zero constraints from prior code. The only existing artifacts are comprehensive planning documentation (`REQUEST.md`) and the implementation plan (`oauth2-authentication.md`), which provide a clear and detailed roadmap.
 
@@ -153,68 +153,68 @@ Auth.js v5 with the MongoDB adapter, following the library's official convention
 
 1. **Central config** (`src/auth.ts`) — declare providers, adapter, session strategy, callbacks
 2. **Route handler** (`src/app/api/auth/[...nextauth]/route.ts`) — expose Auth.js HTTP endpoints
-3. **Middleware** (`src/middleware.ts`) — protect routes declaratively via path matchers
+3. **Proxy** (`src/proxy.ts`) — protect routes declaratively via path matchers
 4. **UI layer** — login page with `signIn()` calls, session-aware header with `signOut()`
 
 ### Complexity: Simple
 
-| Factor | Assessment |
-|---|---|
-| Custom authentication logic | None — Auth.js handles all OAuth2 flows |
-| Custom database schema | None — adapter auto-creates collections |
-| Custom security implementation | None — CSRF, PKCE, JWT encryption are built-in |
-| Provider integration | Declarative — just import `Google` and `GitHub` from `@auth/core/providers` |
-| Session management | Declarative — `strategy: "jwt"` in config |
+| Factor                         | Assessment                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Custom authentication logic    | None — Auth.js handles all OAuth2 flows                                     |
+| Custom database schema         | None — adapter auto-creates collections                                     |
+| Custom security implementation | None — CSRF, PKCE, JWT encryption are built-in                              |
+| Provider integration           | Declarative — just import `Google` and `GitHub` from `@auth/core/providers` |
+| Session management             | Declarative — `strategy: "jwt"` in config                                   |
 
 ### Effort Estimate
 
 **3–5 hours** for a senior developer, broken down:
 
-| Phase | Effort |
-|---|---|
-| Phase 1: Project Setup | ~30 min |
+| Phase                                       | Effort   |
+| ------------------------------------------- | -------- |
+| Phase 1: Project Setup                      | ~30 min  |
 | Phase 2: Infrastructure (MongoDB + Auth.js) | ~1–2 hrs |
-| Phase 3: UI Components | ~1–2 hrs |
-| Phase 4: Security & Polish | ~30 min |
+| Phase 3: UI Components                      | ~1–2 hrs |
+| Phase 4: Security & Polish                  | ~30 min  |
 
 ### Architecture
 
 13 files total, following Auth.js v5 conventions exactly:
 
-| File | Purpose |
-|---|---|
-| `src/auth.ts` | Central Auth.js configuration (providers, adapter, callbacks) |
-| `src/lib/mongodb.ts` | MongoDB client singleton (reused in dev via `global`) |
-| `src/app/api/auth/[...nextauth]/route.ts` | Auth.js route handler (GET + POST) |
-| `src/middleware.ts` | Route protection middleware with path matcher |
-| `src/components/providers/session-provider.tsx` | Client-side SessionProvider wrapper |
-| `src/app/layout.tsx` | Root layout with SessionProvider |
-| `src/app/page.tsx` | Landing page with login/dashboard links |
-| `src/app/login/page.tsx` | Login page with Google/GitHub buttons |
-| `src/app/dashboard/page.tsx` | Protected example page showing user data |
-| `src/components/header.tsx` | Auth-aware header (user info + sign out) |
-| `src/types/next-auth.d.ts` | TypeScript type extensions for Session/JWT |
-| `.env.local` | Environment secrets (git-ignored) |
-| `.env.example` | Environment variable template (committed) |
+| File                                            | Purpose                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| `src/auth.ts`                                   | Central Auth.js configuration (providers, adapter, callbacks) |
+| `src/lib/mongodb.ts`                            | MongoDB client singleton (reused in dev via `global`)         |
+| `src/app/api/auth/[...nextauth]/route.ts`       | Auth.js route handler (GET + POST)                            |
+| `src/proxy.ts`                                  | Route protection proxy with path matcher                      |
+| `src/components/providers/session-provider.tsx` | Client-side SessionProvider wrapper                           |
+| `src/app/layout.tsx`                            | Root layout with SessionProvider                              |
+| `src/app/page.tsx`                              | Landing page with login/dashboard links                       |
+| `src/app/login/page.tsx`                        | Login page with Google/GitHub buttons                         |
+| `src/app/dashboard/page.tsx`                    | Protected example page showing user data                      |
+| `src/components/header.tsx`                     | Auth-aware header (user info + sign out)                      |
+| `src/types/next-auth.d.ts`                      | TypeScript type extensions for Session/JWT                    |
+| `.env.local`                                    | Environment secrets (git-ignored)                             |
+| `.env.example`                                  | Environment variable template (committed)                     |
 
 ### Dependencies
 
 All dependencies are healthy and widely adopted:
 
-| Package | Weekly Downloads | Status |
-|---|---|---|
-| `next-auth` (Auth.js v5) | ~3.27M | Active development, App Router native |
-| `@auth/mongodb-adapter` | ~31K | Official adapter, maintained by Auth.js team |
-| `mongodb` | ~2M | Official MongoDB Node.js driver |
+| Package                  | Weekly Downloads | Status                                       |
+| ------------------------ | ---------------- | -------------------------------------------- |
+| `next-auth` (Auth.js v5) | ~3.27M           | Active development, App Router native        |
+| `@auth/mongodb-adapter`  | ~31K             | Official adapter, maintained by Auth.js team |
+| `mongodb`                | ~2M              | Official MongoDB Node.js driver              |
 
 ### Alternatives Considered
 
-| Alternative | Verdict | Reason for Rejection |
-|---|---|---|
-| **Clerk** | Rejected | Vendor lock-in, recurring cost, overkill for social login only |
-| **Lucia** | Rejected | Deprecated — library is no longer maintained |
-| **Supabase Auth** | Rejected | Ecosystem mismatch — would pull in Supabase dependencies without using Supabase DB |
-| **Custom implementation** | Rejected | Security risk — OAuth2/CSRF/JWT are complex to implement correctly from scratch |
+| Alternative               | Verdict  | Reason for Rejection                                                               |
+| ------------------------- | -------- | ---------------------------------------------------------------------------------- |
+| **Clerk**                 | Rejected | Vendor lock-in, recurring cost, overkill for social login only                     |
+| **Lucia**                 | Rejected | Deprecated — library is no longer maintained                                       |
+| **Supabase Auth**         | Rejected | Ecosystem mismatch — would pull in Supabase dependencies without using Supabase DB |
+| **Custom implementation** | Rejected | Security risk — OAuth2/CSRF/JWT are complex to implement correctly from scratch    |
 
 ### Tech Debt Assessment: LOW
 
@@ -238,13 +238,13 @@ No accidental or hidden tech debt exists since this is a greenfield implementati
 
 All five independent assessment phases reached a **GO** verdict:
 
-| Phase | Agent | Verdict |
-|---|---|---|
-| Phase 1 — Requirement Parsing | requirement-parser | Viable, well-scoped, no blockers |
-| Phase 2 — Product Analysis | product-manager | HIGH value, P0 priority |
-| Phase 2.5 — Technical Discovery | Explore | Clean slate, no conflicts |
+| Phase                           | Agent                    | Verdict                             |
+| ------------------------------- | ------------------------ | ----------------------------------- |
+| Phase 1 — Requirement Parsing   | requirement-parser       | Viable, well-scoped, no blockers    |
+| Phase 2 — Product Analysis      | product-manager          | HIGH value, P0 priority             |
+| Phase 2.5 — Technical Discovery | Explore                  | Clean slate, no conflicts           |
 | Phase 3 — Technical Feasibility | senior-software-engineer | HIGH feasibility, Simple complexity |
-| Phase 4 — Strategic Assessment | technical-cto-advisor | GO with 95% confidence |
+| Phase 4 — Strategic Assessment  | technical-cto-advisor    | GO with 95% confidence              |
 
 ### Risk vs. Reward
 
@@ -261,14 +261,14 @@ This is among the **highest-leverage tasks** at this project stage. A 3–5 hour
 
 ## 8. Risk Register
 
-| # | Risk | Severity | Likelihood | Impact | Mitigation |
-|---|---|---|---|---|---|
-| R1 | No automated tests in initial release | Medium | High (certain — tests are deferred) | Regressions could go unnoticed | Add tests as P0 immediately post-launch; manual verification checklist provided |
-| R2 | Auth.js v5 breaking changes | Low | Low | Could require migration effort | Auth.js v5 is approaching stable; pin dependency versions; monitor changelogs |
-| R3 | OAuth provider policy changes | Low | Low | Could temporarily break login | Google/GitHub OAuth is mature and stable; monitor provider announcements |
-| R4 | Account linking edge cases | Low | Medium | Users with same email on both providers may encounter unexpected behavior | Auth.js handles this by default; verify behavior during manual testing |
-| R5 | MongoDB connection issues in production | Low | Low | Auth would be unavailable | Use MongoDB Atlas with built-in monitoring; implement connection retry logic |
-| R6 | Environment variable misconfiguration | Low | Medium | Auth will fail silently or with cryptic errors | `.env.example` template provided; startup validation recommended for future iteration |
+| #   | Risk                                    | Severity | Likelihood                          | Impact                                                                    | Mitigation                                                                            |
+| --- | --------------------------------------- | -------- | ----------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| R1  | No automated tests in initial release   | Medium   | High (certain — tests are deferred) | Regressions could go unnoticed                                            | Add tests as P0 immediately post-launch; manual verification checklist provided       |
+| R2  | Auth.js v5 breaking changes             | Low      | Low                                 | Could require migration effort                                            | Auth.js v5 is approaching stable; pin dependency versions; monitor changelogs         |
+| R3  | OAuth provider policy changes           | Low      | Low                                 | Could temporarily break login                                             | Google/GitHub OAuth is mature and stable; monitor provider announcements              |
+| R4  | Account linking edge cases              | Low      | Medium                              | Users with same email on both providers may encounter unexpected behavior | Auth.js handles this by default; verify behavior during manual testing                |
+| R5  | MongoDB connection issues in production | Low      | Low                                 | Auth would be unavailable                                                 | Use MongoDB Atlas with built-in monitoring; implement connection retry logic          |
+| R6  | Environment variable misconfiguration   | Low      | Medium                              | Auth will fail silently or with cryptic errors                            | `.env.example` template provided; startup validation recommended for future iteration |
 
 ---
 
@@ -276,12 +276,12 @@ This is among the **highest-leverage tasks** at this project stage. A 3–5 hour
 
 ### Required Before Implementation
 
-| Prerequisite | Owner | Status |
-|---|---|---|
+| Prerequisite                                                                                                                                                                                  | Owner     | Status   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- |
 | **Google OAuth2 Credentials** — Create project in Google Cloud Console, enable OAuth2, generate client ID + secret, configure redirect URI (`http://localhost:3000/api/auth/callback/google`) | Developer | Required |
-| **GitHub OAuth App Credentials** — Create OAuth App in GitHub Developer Settings, obtain client ID + secret, configure callback URL (`http://localhost:3000/api/auth/callback/github`) | Developer | Required |
-| **MongoDB Instance** — Running instance (Atlas free tier recommended) with a connection string | Developer | Required |
-| **Node.js 18+** — Required for Next.js 14+ | Developer | Required |
+| **GitHub OAuth App Credentials** — Create OAuth App in GitHub Developer Settings, obtain client ID + secret, configure callback URL (`http://localhost:3000/api/auth/callback/github`)        | Developer | Required |
+| **MongoDB Instance** — Running instance (Atlas free tier recommended) with a connection string                                                                                                | Developer | Required |
+| **Node.js 18+** — Required for Next.js 14+                                                                                                                                                    | Developer | Required |
 
 ### Notes
 
@@ -295,28 +295,28 @@ This is among the **highest-leverage tasks** at this project stage. A 3–5 hour
 
 ### Immediate (P0 — Within 1 Week)
 
-| Action | Rationale |
-|---|---|
-| **Add automated tests** | No tests exist in v1; this is the highest-severity deferred item. Cover login flows, middleware protection, session validation, and logout. |
-| **Verify account linking behavior** | Confirm what happens when a user signs in with Google and GitHub using the same email address. Document the behavior. |
+| Action                              | Rationale                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add automated tests**             | No tests exist in v1; this is the highest-severity deferred item. Cover login flows, middleware protection, session validation, and logout. |
+| **Verify account linking behavior** | Confirm what happens when a user signs in with Google and GitHub using the same email address. Document the behavior.                       |
 
 ### Medium-Term (P1 — Within 1 Month)
 
-| Action | Rationale |
-|---|---|
-| **Structured logging** | Add logging for auth events (sign-in, sign-out, failures) to support debugging and audit trails |
-| **Rate limiting** | Protect auth endpoints from brute-force and abuse (consider `rate-limiter-flexible` or edge middleware) |
-| **Custom error page** | Replace default Auth.js error page with branded error handling and user-friendly messages |
-| **Return URL preservation** | After login, redirect users to the page they originally requested (not always `/dashboard`) |
+| Action                      | Rationale                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Structured logging**      | Add logging for auth events (sign-in, sign-out, failures) to support debugging and audit trails         |
+| **Rate limiting**           | Protect auth endpoints from brute-force and abuse (consider `rate-limiter-flexible` or edge middleware) |
+| **Custom error page**       | Replace default Auth.js error page with branded error handling and user-friendly messages               |
+| **Return URL preservation** | After login, redirect users to the page they originally requested (not always `/dashboard`)             |
 
 ### Long-Term (P2 — Within 3 Months)
 
-| Action | Rationale |
-|---|---|
-| **RBAC (Role-Based Access Control)** | Add user roles and permissions once the user model is established |
-| **Additional OAuth providers** | Evaluate adding Apple, Microsoft, or other providers based on user demand |
-| **Session analytics** | Track login frequency, provider preference, and session duration for product insights |
-| **Security audit** | Conduct a focused security review of the auth implementation once the application has more surface area |
+| Action                               | Rationale                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| **RBAC (Role-Based Access Control)** | Add user roles and permissions once the user model is established                                       |
+| **Additional OAuth providers**       | Evaluate adding Apple, Microsoft, or other providers based on user demand                               |
+| **Session analytics**                | Track login frequency, provider preference, and session duration for product insights                   |
+| **Security audit**                   | Conduct a focused security review of the auth implementation once the application has more surface area |
 
 ---
 
@@ -341,4 +341,4 @@ Based on the **GO** recommendation with **HIGH confidence**, the following actio
 
 ---
 
-*This research report was generated by the RPI Research Pipeline through 5 independent assessment phases. Each phase was conducted by a specialized agent with domain-specific expertise. The unanimous GO verdict reflects convergence across product, engineering, and strategic dimensions.*
+_This research report was generated by the RPI Research Pipeline through 5 independent assessment phases. Each phase was conducted by a specialized agent with domain-specific expertise. The unanimous GO verdict reflects convergence across product, engineering, and strategic dimensions._

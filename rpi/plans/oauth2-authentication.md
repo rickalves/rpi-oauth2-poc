@@ -1,6 +1,7 @@
 # Plan: OAuth2 Authentication (Google + GitHub)
 
 ## TL;DR
+
 Criar autenticação OAuth2 com provedores Google e GitHub em um projeto **Next.js novo** usando **Auth.js v5** (NextAuth) com **MongoDB** como banco de dados. Auth.js é o padrão de mercado para autenticação em Next.js, com suporte nativo a Google e GitHub, App Router, e adaptador oficial para MongoDB.
 
 ---
@@ -51,8 +52,8 @@ Criar autenticação OAuth2 com provedores Google e GitHub em um projeto **Next.
 7. **Criar route handler** — `src/app/api/auth/[...nextauth]/route.ts`
    - Exportar `GET` e `POST` dos handlers do Auth.js
 
-8. **Criar middleware de proteção** — `src/middleware.ts`
-   - Exportar `auth` como middleware padrão do Auth.js v5
+8. **Criar proxy de proteção** — `src/proxy.ts`
+   - Exportar `auth` como proxy padrão do Auth.js v5
    - Configurar `matcher` para rotas protegidas (ex: `/dashboard/:path*`)
 
 ### Fase 3: UI de Autenticação
@@ -97,7 +98,7 @@ Criar autenticação OAuth2 com provedores Google e GitHub em um projeto **Next.
 - `src/lib/mongodb.ts` — singleton de conexão MongoDB (reusável em dev/prod)
 - `src/auth.ts` — configuração central Auth.js com providers Google/GitHub e MongoDBAdapter
 - `src/app/api/auth/[...nextauth]/route.ts` — route handler do Auth.js
-- `src/middleware.ts` — middleware de proteção de rotas
+- `src/proxy.ts` — proxy de proteção de rotas
 - `src/components/providers/session-provider.tsx` — wrapper do SessionProvider
 - `src/app/layout.tsx` — layout raiz com SessionProvider
 - `src/app/login/page.tsx` — página de login com botões Google/GitHub

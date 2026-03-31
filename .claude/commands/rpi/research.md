@@ -18,6 +18,7 @@ You **MUST** parse the user input to extract the feature slug (the folder name i
 This command performs comprehensive research and analysis of feature requests **before** the planning phase begins. It acts as a critical GO/NO-GO gate to determine whether a feature idea should proceed to detailed planning.
 
 **Key Objectives**:
+
 - Assess product-market fit and user value
 - Evaluate technical feasibility and complexity
 - Identify risks and potential blockers
@@ -25,6 +26,7 @@ This command performs comprehensive research and analysis of feature requests **
 - Make go/no-go recommendation with clear rationale
 
 **Prerequisites**:
+
 - Feature folder exists at `rpi/{feature-slug}/`
 - Feature request file exists at `rpi/{feature-slug}/REQUEST.md`
 
@@ -54,6 +56,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Prerequisites**: Feature slug provided, `rpi/{feature-slug}/REQUEST.md` exists
 
 **Process**:
+
 1. **Read feature description**:
    - Read `rpi/{feature-slug}/REQUEST.md` (required)
    - Extract feature requirements and goals from REQUEST.md
@@ -68,11 +71,13 @@ This command performs comprehensive research and analysis of feature requests **
    - Identify key alignment criteria
 
 **Outputs**:
+
 - Feature description summary
 - Constitutional principles (if found)
 - Alignment criteria for evaluation
 
 **Validation**:
+
 - [ ] Feature folder exists in `rpi/{feature-slug}/`
 - [ ] Feature description extracted
 - [ ] Constitution checked and loaded (if exists)
@@ -86,6 +91,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Agent**: requirement-parser (planning domain)
 
 **Process**:
+
 1. **Launch requirement-parser agent** with feature description
 2. **Agent extracts**:
    - Feature name and type
@@ -100,6 +106,7 @@ This command performs comprehensive research and analysis of feature requests **
    - If clarifying questions exist, **STOP and ask user** before proceeding
 
 **Outputs**:
+
 - Structured requirements document
 - Feature metadata (name, type, component, complexity)
 - Clarifying questions (if any)
@@ -113,6 +120,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Agent**: product-manager
 
 **Process**:
+
 1. **Launch product-manager agent** with:
    - Parsed requirements from Phase 1
    - Constitutional context from Phase 0
@@ -132,6 +140,7 @@ This command performs comprehensive research and analysis of feature requests **
    - Product concerns or red flags
 
 **Outputs**:
+
 - Product viability assessment
 - User value analysis
 - Strategic alignment score
@@ -148,6 +157,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Purpose**: **CRITICAL PHASE** - Deeply analyze existing codebase BEFORE making technical feasibility assessment.
 
 **Process**:
+
 1. **Launch Explore agent** with target component(s)
 2. **Agent investigates**:
    - **Existing Implementation**: What code already exists for similar functionality?
@@ -165,6 +175,7 @@ This command performs comprehensive research and analysis of feature requests **
    - **Technical Constraints**: Real constraints from existing code
 
 **Outputs**:
+
 - Current implementation summary
 - Integration points map
 - Code conflicts identified
@@ -182,6 +193,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Agent**: senior-software-engineer
 
 **Process**:
+
 1. **Launch senior-software-engineer agent** with:
    - Parsed requirements from Phase 1
    - Product context from Phase 2
@@ -201,6 +213,7 @@ This command performs comprehensive research and analysis of feature requests **
    - Technical risks and mitigations
 
 **Outputs**:
+
 - Technical feasibility score
 - Recommended implementation approach
 - Complexity and effort estimate
@@ -215,6 +228,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Agent**: technical-cto-advisor
 
 **Process**:
+
 1. **Launch technical-cto-advisor agent** with all previous phase outputs
 
 2. **Agent synthesizes**:
@@ -231,6 +245,7 @@ This command performs comprehensive research and analysis of feature requests **
    - **Risks**: Key risks if we proceed
 
 **Outputs**:
+
 - Go/No-Go recommendation
 - Strategic rationale
 - Recommended approach
@@ -245,6 +260,7 @@ This command performs comprehensive research and analysis of feature requests **
 **Agent**: documentation-analyst-writer (via Task tool)
 
 **Process**:
+
 1. **Launch documentation-analyst-writer agent** with all phase outputs
 
 2. **Agent generates report** with sections:
@@ -260,6 +276,7 @@ This command performs comprehensive research and analysis of feature requests **
 3. **Agent creates markdown file**: `rpi/{feature-slug}/research/RESEARCH.md`
 
 **Outputs**:
+
 - Complete research report saved to `rpi/{feature-slug}/research/RESEARCH.md`
 
 ---
@@ -268,14 +285,14 @@ This command performs comprehensive research and analysis of feature requests **
 
 This command orchestrates 6 specialist agents:
 
-| Phase | Agent | Type | Location |
-|-------|-------|------|----------|
-| Phase 1 | requirement-parser | Custom | .claude/agents/requirement-parser.md |
-| Phase 2 | product-manager | Custom | .claude/agents/product-manager.md |
-| Phase 2.5 | Explore | Built-in | Task tool with subagent_type="Explore" |
-| Phase 3 | senior-software-engineer | Custom | .claude/agents/senior-software-engineer.md |
-| Phase 4 | technical-cto-advisor | Custom | .claude/agents/technical-cto-advisor.md |
-| Phase 5 | documentation-analyst-writer | Built-in | Task tool with subagent_type="documentation-analyst-writer" |
+| Phase     | Agent                        | Type     | Location                                                    |
+| --------- | ---------------------------- | -------- | ----------------------------------------------------------- |
+| Phase 1   | requirement-parser           | Custom   | .claude/agents/requirement-parser.md                        |
+| Phase 2   | product-manager              | Custom   | .claude/agents/product-manager.md                           |
+| Phase 2.5 | Explore                      | Built-in | Task tool with subagent_type="Explore"                      |
+| Phase 3   | senior-software-engineer     | Custom   | .claude/agents/senior-software-engineer.md                  |
+| Phase 4   | technical-cto-advisor        | Custom   | .claude/agents/technical-cto-advisor.md                     |
+| Phase 5   | documentation-analyst-writer | Built-in | Task tool with subagent_type="documentation-analyst-writer" |
 
 ---
 
@@ -302,11 +319,13 @@ Report the following on successful completion:
 **Complexity**: {Simple | Medium | Complex}
 
 **Scores**:
+
 - Product Viability: [High/Medium/Low]
 - Technical Feasibility: [High/Medium/Low]
 - Overall Assessment: [High/Medium/Low]
 
 **Key Risks**:
+
 1. {risk-1}
 2. {risk-2}
 3. {risk-3}
@@ -324,19 +343,23 @@ Report the following on successful completion:
 Based on the **[GO/NO-GO]** recommendation:
 
 **If GO**:
+
 1. Review the research report: `rpi/{feature-slug}/research/RESEARCH.md`
 2. Proceed to planning: `/rpi:plan "{feature-slug}"`
 
 **If CONDITIONAL GO**:
+
 1. Review conditions in report
 2. Address conditions before proceeding
 3. Re-run research if needed
 
 **If DEFER**:
+
 1. Review timeline recommendation in report
 2. Revisit when timing is appropriate
 
 **If NO-GO**:
+
 1. Review rationale in report
 2. Consider alternatives mentioned
 3. Archive for future reference
@@ -346,15 +369,18 @@ Based on the **[GO/NO-GO]** recommendation:
 ## Error Handling
 
 **If REQUEST.md doesn't exist**:
+
 - Action: Stop and inform user
 - Message: "Feature request file `rpi/{feature-slug}/REQUEST.md` not found. Create the feature folder and REQUEST.md first (Step 1: Describe in Plan Mode)."
 
 **If feature description is too vague**:
+
 - Action: requirement-parser will identify clarifying questions
 - Message: "Need more information. Please answer:"
 - Next: Wait for answers, then proceed
 
 **If agents fail or timeout**:
+
 - Action: Retry once
 - Next: If retry fails, ask user whether to continue with incomplete research
 

@@ -9,29 +9,32 @@
 
 ## 1. UX Goals
 
-| Priority | Goal | Rationale |
-|---|---|---|
-| 1 | **Minimal friction** | Reduce steps to zero-form login; one click per provider |
-| 2 | **Speed** | OAuth redirect must feel instant; avoid loading jank |
-| 3 | **Trust** | Use official provider brand colors and recognizable button patterns |
-| 4 | **Clarity** | Every state (loading, error, authed) gives clear feedback |
-| 5 | **Recovery** | Auth failures surface actionable messages, not raw errors |
+| Priority | Goal                 | Rationale                                                           |
+| -------- | -------------------- | ------------------------------------------------------------------- |
+| 1        | **Minimal friction** | Reduce steps to zero-form login; one click per provider             |
+| 2        | **Speed**            | OAuth redirect must feel instant; avoid loading jank                |
+| 3        | **Trust**            | Use official provider brand colors and recognizable button patterns |
+| 4        | **Clarity**          | Every state (loading, error, authed) gives clear feedback           |
+| 5        | **Recovery**         | Auth failures surface actionable messages, not raw errors           |
 
 ---
 
 ## 2. User Personas
 
 ### Guest User
+
 - Not authenticated; lands on home page or a protected route
 - Wants to access the app quickly with minimum effort
 - Familiar with "Sign in with Google/GitHub" patterns from other apps
 
 ### Authenticated User
+
 - Has an active session; navigates freely within the app
 - Expects their avatar and name to appear in the header
 - Wants a reliable, one-click sign-out
 
 ### Returning User (Redirect Case)
+
 - Previously bookmarked `/dashboard` or another protected route
 - Arrives unauthenticated; expects to land back on their intended page after login
 
@@ -64,6 +67,7 @@
 ```
 
 **Steps**:
+
 1. Guest lands on `/` or is redirected from a protected route to `/login?callbackUrl=<original>`
 2. Guest sees two buttons: "Sign in with Google" and "Sign in with GitHub"
 3. Guest clicks a provider button
@@ -78,12 +82,12 @@
 
 **Error handling**:
 
-| Scenario | Behavior |
-|---|---|
-| User denies consent on provider | Redirected to `/login?error=OAuthCallback`; error banner shown |
-| Provider returns an error | Redirected to `/login?error=<code>`; generic "Authentication failed" message |
-| Network timeout during redirect | Browser native timeout; user returns to `/login`; retry encouraged |
-| Account already linked to another provider | Auth.js `OAuthAccountNotLinked` error → error banner with explanation |
+| Scenario                                   | Behavior                                                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| User denies consent on provider            | Redirected to `/login?error=OAuthCallback`; error banner shown               |
+| Provider returns an error                  | Redirected to `/login?error=<code>`; generic "Authentication failed" message |
+| Network timeout during redirect            | Browser native timeout; user returns to `/login`; retry encouraged           |
+| Account already linked to another provider | Auth.js `OAuthAccountNotLinked` error → error banner with explanation        |
 
 ---
 
@@ -102,6 +106,7 @@
 ```
 
 **Steps**:
+
 1. Authenticated user clicks "Sign out" in the Header
 2. Button shows loading state; click is non-repeatable
 3. `signOut()` is called; session cookie is cleared
@@ -111,15 +116,15 @@
 
 **Error handling**:
 
-| Scenario | Behavior |
-|---|---|
+| Scenario               | Behavior                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
 | `signOut()` call fails | Toast/banner: "Failed to sign out. Try again."; session state unchanged |
 
 ---
 
 ### 3.3 Protected Route Access (Unauthenticated)
 
-**Entry point**: Any direct URL access to `/dashboard` or other protected routes (enforced by `src/middleware.ts`).
+**Entry point**: Any direct URL access to `/dashboard` or other protected routes (enforced by `src/proxy.ts`).
 
 ```
 [Guest] --> [Navigates to /dashboard]
@@ -134,6 +139,7 @@
 ```
 
 **Steps**:
+
 1. User navigates to a protected route
 2. Middleware detects no valid session
 3. Middleware redirects to `/login?callbackUrl=<original-path>`
@@ -144,10 +150,10 @@
 
 **Error handling**:
 
-| Scenario | Behavior |
-|---|---|
+| Scenario                         | Behavior                                                       |
+| -------------------------------- | -------------------------------------------------------------- |
 | `callbackUrl` is an external URL | Middleware sanitizes `callbackUrl`; falls back to `/dashboard` |
-| Login fails mid-flow | Error shown on `/login`; `callbackUrl` param preserved |
+| Login fails mid-flow             | Error shown on `/login`; `callbackUrl` param preserved         |
 
 ---
 
@@ -164,6 +170,7 @@
 ```
 
 **Steps**:
+
 1. User with active session navigates to `/login`
 2. Middleware detects valid session
 3. User is immediately redirected to `/dashboard`
@@ -180,20 +187,21 @@
 
 **Key Elements**:
 
-| Element | Behavior |
-|---|---|
-| Hero headline | Static text describing the product |
+| Element                  | Behavior                                                  |
+| ------------------------ | --------------------------------------------------------- |
+| Hero headline            | Static text describing the product                        |
 | "Get Started" CTA button | Links to `/login` (guest) or `/dashboard` (authenticated) |
-| Header | Auth-aware (see Header component spec) |
+| Header                   | Auth-aware (see Header component spec)                    |
 
 **States**:
 
-| State | Description |
-|---|---|
-| Default (guest) | Hero visible; CTA links to `/login` |
-| Authenticated | CTA label changes to "Go to Dashboard"; links to `/dashboard` |
+| State           | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| Default (guest) | Hero visible; CTA links to `/login`                           |
+| Authenticated   | CTA label changes to "Go to Dashboard"; links to `/dashboard` |
 
 **Accessibility**:
+
 - CTA button has descriptive `aria-label`: `"Get started with OAuth2 App"`
 - Heading hierarchy: `<h1>` for hero headline
 
@@ -205,31 +213,32 @@
 
 **Key Elements**:
 
-| Element | Behavior |
-|---|---|
-| Page title | "Sign in to [App Name]" |
-| Google sign-in button | Triggers `signIn("google")`; passes `callbackUrl` |
-| GitHub sign-in button | Triggers `signIn("github")`; passes `callbackUrl` |
-| Error banner | Conditionally rendered when `?error=` param is present |
+| Element               | Behavior                                               |
+| --------------------- | ------------------------------------------------------ |
+| Page title            | "Sign in to [App Name]"                                |
+| Google sign-in button | Triggers `signIn("google")`; passes `callbackUrl`      |
+| GitHub sign-in button | Triggers `signIn("github")`; passes `callbackUrl`      |
+| Error banner          | Conditionally rendered when `?error=` param is present |
 
 **States**:
 
-| State | Description |
-|---|---|
-| Default | Both provider buttons active and visible |
-| Loading | Clicked button shows spinner, label changes to "Signing in…"; both buttons `disabled` |
-| Error | Banner above buttons: "Authentication failed. Please try again." with specific hint for `OAuthAccountNotLinked` |
+| State   | Description                                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
+| Default | Both provider buttons active and visible                                                                        |
+| Loading | Clicked button shows spinner, label changes to "Signing in…"; both buttons `disabled`                           |
+| Error   | Banner above buttons: "Authentication failed. Please try again." with specific hint for `OAuthAccountNotLinked` |
 
 **Error Messages by Code**:
 
-| `error` param value | User-facing message |
-|---|---|
-| `OAuthCallback` | "Authentication failed. Please try again." |
-| `OAuthAccountNotLinked` | "This email is already linked to another sign-in method." |
-| `AccessDenied` | "Access was denied. You can try again or use a different account." |
-| _(any other)_ | "Something went wrong. Please try again." |
+| `error` param value     | User-facing message                                                |
+| ----------------------- | ------------------------------------------------------------------ |
+| `OAuthCallback`         | "Authentication failed. Please try again."                         |
+| `OAuthAccountNotLinked` | "This email is already linked to another sign-in method."          |
+| `AccessDenied`          | "Access was denied. You can try again or use a different account." |
+| _(any other)_           | "Something went wrong. Please try again."                          |
 
 **Accessibility**:
+
 - Buttons have `aria-label`: `"Sign in with Google"`, `"Sign in with GitHub"`
 - Loading state sets `aria-busy="true"` on the button and `aria-disabled="true"` on the inactive button
 - Error banner uses `role="alert"` and `aria-live="assertive"`
@@ -244,23 +253,24 @@
 
 **Key Elements**:
 
-| Element | Behavior |
-|---|---|
-| User avatar | Circular image from provider (`user.image`); fallback initials avatar |
-| User name | `user.name` from session |
-| User email | `user.email` from session |
-| Header | Authenticated state (avatar + sign-out button) |
-| Page content | Placeholder content / welcome message |
+| Element      | Behavior                                                              |
+| ------------ | --------------------------------------------------------------------- |
+| User avatar  | Circular image from provider (`user.image`); fallback initials avatar |
+| User name    | `user.name` from session                                              |
+| User email   | `user.email` from session                                             |
+| Header       | Authenticated state (avatar + sign-out button)                        |
+| Page content | Placeholder content / welcome message                                 |
 
 **States**:
 
-| State | Description |
-|---|---|
-| Loading | Skeleton loaders for avatar, name, email while session resolves |
-| Authenticated | Full profile displayed |
+| State               | Description                                                          |
+| ------------------- | -------------------------------------------------------------------- |
+| Loading             | Skeleton loaders for avatar, name, email while session resolves      |
+| Authenticated       | Full profile displayed                                               |
 | Avatar load failure | Initials-based fallback avatar (`bg-gray-200`, first letter of name) |
 
 **Accessibility**:
+
 - Avatar `<img>` has `alt="<user.name>'s profile picture"`; fallback has `aria-label="<user.name> avatar"`
 - Heading: `<h1>Welcome, <user.name>`
 - Page `<title>` updates to `"Dashboard — [App Name]"`
@@ -273,22 +283,23 @@
 
 **States**:
 
-| State | Elements |
-|---|---|
-| Unauthenticated | Logo + "Sign in" link (→ `/login`) |
-| Authenticated | Logo + user avatar (small, circular) + user name + "Sign out" button |
-| Loading (session resolving) | Logo + skeleton placeholder (prevents layout shift) |
+| State                       | Elements                                                             |
+| --------------------------- | -------------------------------------------------------------------- |
+| Unauthenticated             | Logo + "Sign in" link (→ `/login`)                                   |
+| Authenticated               | Logo + user avatar (small, circular) + user name + "Sign out" button |
+| Loading (session resolving) | Logo + skeleton placeholder (prevents layout shift)                  |
 
 **Key Element Behaviors**:
 
-| Element | Behavior |
-|---|---|
-| "Sign in" link | Navigates to `/login` |
-| Avatar | Non-interactive display; shows provider image or initials fallback |
-| User name | Truncated with `truncate` at ~150px max-width on mobile |
-| "Sign out" button | Calls `signOut()`; shows spinner during operation |
+| Element           | Behavior                                                           |
+| ----------------- | ------------------------------------------------------------------ |
+| "Sign in" link    | Navigates to `/login`                                              |
+| Avatar            | Non-interactive display; shows provider image or initials fallback |
+| User name         | Truncated with `truncate` at ~150px max-width on mobile            |
+| "Sign out" button | Calls `signOut()`; shows spinner during operation                  |
 
 **Accessibility**:
+
 - "Sign in" link: `aria-label="Sign in to your account"`
 - "Sign out" button: `aria-label="Sign out of your account"`; `aria-busy="true"` during loading
 - Avatar image: `alt="<user.name>"`
@@ -298,17 +309,17 @@
 
 ## 5. Component Breakdown
 
-| Component | Location | Flows |
-|---|---|---|
-| `LandingPage` | `app/page.tsx` | 3.1 (entry), 3.4 (authed redirect) |
-| `LoginPage` | `app/login/page.tsx` | 3.1 (Sign In), 3.3 (Protected entry), 3.4 (redirect out) |
-| `ProviderButton` | `components/auth/ProviderButton.tsx` | 3.1 |
-| `AuthErrorBanner` | `components/auth/AuthErrorBanner.tsx` | 3.1 (error state) |
-| `DashboardPage` | `app/dashboard/page.tsx` | 3.1 (end state), 3.2 (entry), 3.3 (end state) |
-| `UserProfile` | `components/dashboard/UserProfile.tsx` | 3.1, 3.3 |
-| `Header` | `components/layout/Header.tsx` | 3.1, 3.2, 3.4 |
-| `AvatarDisplay` | `components/ui/AvatarDisplay.tsx` | 3.1, 3.2, header |
-| `Middleware` | `src/middleware.ts` | 3.3, 3.4 |
+| Component         | Location                               | Flows                                                    |
+| ----------------- | -------------------------------------- | -------------------------------------------------------- |
+| `LandingPage`     | `app/page.tsx`                         | 3.1 (entry), 3.4 (authed redirect)                       |
+| `LoginPage`       | `app/login/page.tsx`                   | 3.1 (Sign In), 3.3 (Protected entry), 3.4 (redirect out) |
+| `ProviderButton`  | `components/auth/ProviderButton.tsx`   | 3.1                                                      |
+| `AuthErrorBanner` | `components/auth/AuthErrorBanner.tsx`  | 3.1 (error state)                                        |
+| `DashboardPage`   | `app/dashboard/page.tsx`               | 3.1 (end state), 3.2 (entry), 3.3 (end state)            |
+| `UserProfile`     | `components/dashboard/UserProfile.tsx` | 3.1, 3.3                                                 |
+| `Header`          | `components/layout/Header.tsx`         | 3.1, 3.2, 3.4                                            |
+| `AvatarDisplay`   | `components/ui/AvatarDisplay.tsx`      | 3.1, 3.2, header                                         |
+| `Proxy`           | `src/proxy.ts`                         | 3.3, 3.4                                                 |
 
 ---
 
@@ -317,6 +328,7 @@
 ### 6.1 OAuth Redirect Loading State
 
 When a provider button is clicked:
+
 1. Clicked button: label → "Signing in…"; spinner appears left of label
 2. Other provider button: `opacity-50 cursor-not-allowed disabled`
 3. Browser navigates away — no further client state needed
@@ -326,6 +338,7 @@ No skeleton screen needed for the redirect itself (navigation is full-page).
 ### 6.2 Post-Login Page Load
 
 On first render of `/dashboard` after sign-in:
+
 - Session may not be instantly available on client
 - Show skeleton loaders for avatar (circle, `w-12 h-12`), name (rect, `w-32 h-4`), email (rect, `w-48 h-3`)
 - Replace with real data once `useSession()` / server session resolves
@@ -375,31 +388,37 @@ Page Title (text-2xl font-bold)
 ### 7.3 Provider Button Styles
 
 #### Google Button
+
 ```
 bg-white border border-gray-300 hover:bg-gray-50
 text-gray-700 font-medium text-sm
 rounded-lg px-4 py-2.5
 shadow-sm
 ```
+
 - Google logo SVG (official) left of label
 - Label: "Sign in with Google"
 - Do **not** use `bg-[#4285F4]` unless following exact Google brand guidelines (white button is preferred and brand-compliant)
 
 #### GitHub Button
+
 ```
 bg-[#24292F] hover:bg-[#1a1f24]
 text-white font-medium text-sm
 rounded-lg px-4 py-2.5
 ```
+
 - GitHub Invertocat SVG (white) left of label
 - Label: "Sign in with GitHub"
 
 #### Shared Button Layout
+
 ```
 flex items-center justify-center gap-3 w-full
 transition-colors duration-150
 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
 ```
+
 - Full-width inside their container
 - Vertically centered icon + label
 
@@ -418,22 +437,22 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
 
 ### 7.6 Contrast & Color Accessibility
 
-| Element | Foreground | Background | Contrast |
-|---|---|---|---|
-| Body text | `text-gray-900` (#111827) | `bg-white` | ≥ 7:1 (AAA) |
-| Secondary text | `text-gray-600` (#4B5563) | `bg-white` | ≥ 4.5:1 (AA) |
-| Error text | `text-red-800` (#991B1B) | `bg-red-50` | ≥ 4.5:1 (AA) |
-| GitHub button | `text-white` | `bg-[#24292F]` | ≥ 4.5:1 (AA) |
-| Google button | `text-gray-700` | `bg-white` | ≥ 4.5:1 (AA) |
+| Element        | Foreground                | Background     | Contrast     |
+| -------------- | ------------------------- | -------------- | ------------ |
+| Body text      | `text-gray-900` (#111827) | `bg-white`     | ≥ 7:1 (AAA)  |
+| Secondary text | `text-gray-600` (#4B5563) | `bg-white`     | ≥ 4.5:1 (AA) |
+| Error text     | `text-red-800` (#991B1B)  | `bg-red-50`    | ≥ 4.5:1 (AA) |
+| GitHub button  | `text-white`              | `bg-[#24292F]` | ≥ 4.5:1 (AA) |
+| Google button  | `text-gray-700`           | `bg-white`     | ≥ 4.5:1 (AA) |
 
 All interactive elements must meet WCAG 2.1 AA minimum contrast (4.5:1 for text, 3:1 for large text and UI components).
 
 ### 7.7 Responsive Breakpoints
 
-| Breakpoint | Layout |
-|---|---|
-| Mobile (`< 640px`) | Single column; buttons full-width; header collapses name text |
-| Tablet (`640px–1024px`) | Centered card on login page (`max-w-sm mx-auto`) |
-| Desktop (`> 1024px`) | Same as tablet; dashboard may expand to multi-column |
+| Breakpoint              | Layout                                                        |
+| ----------------------- | ------------------------------------------------------------- |
+| Mobile (`< 640px`)      | Single column; buttons full-width; header collapses name text |
+| Tablet (`640px–1024px`) | Centered card on login page (`max-w-sm mx-auto`)              |
+| Desktop (`> 1024px`)    | Same as tablet; dashboard may expand to multi-column          |
 
 Login card constraint: `w-full max-w-sm` — centered with `mx-auto`, `p-8` internal padding, `rounded-2xl shadow-md bg-white`.

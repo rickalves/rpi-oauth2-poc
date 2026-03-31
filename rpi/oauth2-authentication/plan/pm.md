@@ -21,10 +21,10 @@ All planned user-specific features are gated on a verified identity system. With
 
 ## 3. Users & Jobs to Be Done
 
-| User Type | Job to Be Done |
-|---|---|
-| **Guest** | Authenticate quickly using an account I already trust (Google or GitHub), without creating a new password |
-| **Authenticated User** | Access protected product areas, see my own identity reflected in the UI, and sign out cleanly when done |
+| User Type               | Job to Be Done                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Guest**               | Authenticate quickly using an account I already trust (Google or GitHub), without creating a new password                |
+| **Authenticated User**  | Access protected product areas, see my own identity reflected in the UI, and sign out cleanly when done                  |
 | **Product/Engineering** | Reliably persist user identity across sessions and providers; gate access to protected routes without bespoke middleware |
 
 ---
@@ -113,35 +113,35 @@ All planned user-specific features are gated on a verified identity system. With
 
 ## 6. Functional Requirements
 
-| # | Requirement | Acceptance Criteria Reference |
-|---|---|---|
-| FR-01 | OAuth2 authentication via Google provider | US-01 |
-| FR-02 | OAuth2 authentication via GitHub provider | US-02 |
-| FR-03 | JWT-based stateless sessions | US-07 |
-| FR-04 | MongoDB persistence via `@auth/mongodb-adapter` (users, accounts, sessions) | US-06 |
-| FR-05 | Middleware-based route protection for `/dashboard/*` | US-03 |
-| FR-06 | Login page with branded Google and GitHub sign-in buttons | US-01, US-02 |
-| FR-07 | Logout with session destruction and redirect | US-05 |
-| FR-08 | Auth-aware header component (name, avatar, sign-out) | US-04 |
-| FR-09 | Route handler at `/api/auth/[...nextauth]` | US-01, US-02, US-05 |
-| FR-10 | Session provider wrapping the app for client-side session access | US-04, US-07 |
+| #     | Requirement                                                                 | Acceptance Criteria Reference |
+| ----- | --------------------------------------------------------------------------- | ----------------------------- |
+| FR-01 | OAuth2 authentication via Google provider                                   | US-01                         |
+| FR-02 | OAuth2 authentication via GitHub provider                                   | US-02                         |
+| FR-03 | JWT-based stateless sessions                                                | US-07                         |
+| FR-04 | MongoDB persistence via `@auth/mongodb-adapter` (users, accounts, sessions) | US-06                         |
+| FR-05 | Middleware-based route protection for `/dashboard/*`                        | US-03                         |
+| FR-06 | Login page with branded Google and GitHub sign-in buttons                   | US-01, US-02                  |
+| FR-07 | Logout with session destruction and redirect                                | US-05                         |
+| FR-08 | Auth-aware header component (name, avatar, sign-out)                        | US-04                         |
+| FR-09 | Route handler at `/api/auth/[...nextauth]`                                  | US-01, US-02, US-05           |
+| FR-10 | Session provider wrapping the app for client-side session access            | US-04, US-07                  |
 
 ---
 
 ## 7. Non-Functional Requirements
 
-| Category | Requirement |
-|---|---|
-| **Security — CSRF** | Built-in CSRF protection via Auth.js v5 (double-submit cookie pattern) |
-| **Security — Cookies** | Session cookies must have `HttpOnly`, `SameSite=Lax`, `Secure` flags set by default |
-| **Security — PKCE** | PKCE enforced on all OAuth2 flows via Auth.js v5 default |
-| **Security — JWT** | AES-256-GCM encryption for JWT payload via Auth.js v5 |
+| Category               | Requirement                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **Security — CSRF**    | Built-in CSRF protection via Auth.js v5 (double-submit cookie pattern)                              |
+| **Security — Cookies** | Session cookies must have `HttpOnly`, `SameSite=Lax`, `Secure` flags set by default                 |
+| **Security — PKCE**    | PKCE enforced on all OAuth2 flows via Auth.js v5 default                                            |
+| **Security — JWT**     | AES-256-GCM encryption for JWT payload via Auth.js v5                                               |
 | **Security — Secrets** | All secrets stored in `.env.local`; `.env.example` template committed; no secrets in source control |
-| **Type Safety** | Full TypeScript coverage; `Session` and `JWT` types extended for custom claims |
-| **Performance** | Login redirect round-trip < 3 s on a standard connection (provider-dependent) |
-| **Observability** | Auth.js debug mode disabled in production; errors logged via platform logger |
-| **Availability** | Feature inherits platform SLO; no additional SLO defined for v1 |
-| **Privacy** | Only name, email, and avatar image collected from provider; no additional OAuth scopes requested |
+| **Type Safety**        | Full TypeScript coverage; `Session` and `JWT` types extended for custom claims                      |
+| **Performance**        | Login redirect round-trip < 3 s on a standard connection (provider-dependent)                       |
+| **Observability**      | Auth.js debug mode disabled in production; errors logged via platform logger                        |
+| **Availability**       | Feature inherits platform SLO; no additional SLO defined for v1                                     |
+| **Privacy**            | Only name, email, and avatar image collected from provider; no additional OAuth scopes requested    |
 
 ---
 
@@ -165,38 +165,38 @@ The following are explicitly **not** included in this release:
 
 ## 9. Dependencies & Prerequisites
 
-| Dependency | Owner | Notes |
-|---|---|---|
-| Google OAuth2 Client ID + Secret | Platform/Infra | Must be created in Google Cloud Console; authorised redirect URI: `{BASE_URL}/api/auth/callback/google` |
-| GitHub OAuth App Client ID + Secret | Platform/Infra | Must be created in GitHub Developer Settings; callback URL: `{BASE_URL}/api/auth/callback/github` |
-| MongoDB instance (Atlas or self-hosted) | Platform/Infra | Connection string required; database and collection names configurable |
-| `AUTH_SECRET` (32-byte random string) | Platform/Infra | Used for JWT signing/encryption; must be rotated if compromised |
-| Node.js 18+ | Engineering | Required by Next.js 14+ |
-| `next-auth@beta` (Auth.js v5) | Engineering | Must pin version to avoid breaking beta changes |
-| `@auth/mongodb-adapter` | Engineering | Peer dependency on `mongodb` driver |
+| Dependency                              | Owner          | Notes                                                                                                   |
+| --------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
+| Google OAuth2 Client ID + Secret        | Platform/Infra | Must be created in Google Cloud Console; authorised redirect URI: `{BASE_URL}/api/auth/callback/google` |
+| GitHub OAuth App Client ID + Secret     | Platform/Infra | Must be created in GitHub Developer Settings; callback URL: `{BASE_URL}/api/auth/callback/github`       |
+| MongoDB instance (Atlas or self-hosted) | Platform/Infra | Connection string required; database and collection names configurable                                  |
+| `AUTH_SECRET` (32-byte random string)   | Platform/Infra | Used for JWT signing/encryption; must be rotated if compromised                                         |
+| Node.js 18+                             | Engineering    | Required by Next.js 14+                                                                                 |
+| `next-auth@beta` (Auth.js v5)           | Engineering    | Must pin version to avoid breaking beta changes                                                         |
+| `@auth/mongodb-adapter`                 | Engineering    | Peer dependency on `mongodb` driver                                                                     |
 
 ---
 
 ## 10. Risks & Mitigations
 
-| # | Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|---|
-| R-01 | **Account collision**: A user signs in with Google and later with GitHub using the same email address — the adapter may create two separate user records or fail silently | Medium | Medium | Document known behaviour of `@auth/mongodb-adapter` for this edge case; add a manual merge note in the post-launch backlog; do not surface account linking in v1 |
-| R-02 | **No automated test coverage at launch**: Regressions in login flow, session handling, or route protection may not be caught before they reach users | High | High | Flag as P0 post-launch item; include manual smoke-test checklist in the release runbook; schedule test sprint immediately after v1 ships |
-| R-03 | **`next-auth@beta` instability**: Breaking changes in a beta package could require emergency patches | Low | High | Pin exact version in `package.json`; review Auth.js changelog before any dependency update |
-| R-04 | **Misconfigured OAuth redirect URIs**: Wrong callback URLs in provider settings cause 100% auth failure | Low | Critical | Include redirect URI configuration in deployment checklist; validate in staging before production deploy |
-| R-05 | **MongoDB connection failure**: Auth adapter cannot persist user records, causing login errors | Low | High | Ensure connection string includes retry logic; add MongoDB health check to observability stack |
+| #    | Risk                                                                                                                                                                      | Likelihood | Impact   | Mitigation                                                                                                                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-01 | **Account collision**: A user signs in with Google and later with GitHub using the same email address — the adapter may create two separate user records or fail silently | Medium     | Medium   | Document known behaviour of `@auth/mongodb-adapter` for this edge case; add a manual merge note in the post-launch backlog; do not surface account linking in v1 |
+| R-02 | **No automated test coverage at launch**: Regressions in login flow, session handling, or route protection may not be caught before they reach users                      | High       | High     | Flag as P0 post-launch item; include manual smoke-test checklist in the release runbook; schedule test sprint immediately after v1 ships                         |
+| R-03 | **`next-auth@beta` instability**: Breaking changes in a beta package could require emergency patches                                                                      | Low        | High     | Pin exact version in `package.json`; review Auth.js changelog before any dependency update                                                                       |
+| R-04 | **Misconfigured OAuth redirect URIs**: Wrong callback URLs in provider settings cause 100% auth failure                                                                   | Low        | Critical | Include redirect URI configuration in deployment checklist; validate in staging before production deploy                                                         |
+| R-05 | **MongoDB connection failure**: Auth adapter cannot persist user records, causing login errors                                                                            | Low        | High     | Ensure connection string includes retry logic; add MongoDB health check to observability stack                                                                   |
 
 ---
 
 ## 11. Rollout Plan
 
-| Phase | Description |
-|---|---|
-| **Local dev** | Engineers configure `.env.local` from `.env.example`; validate Google + GitHub flows locally |
-| **Staging** | Deploy to staging environment with production-equivalent OAuth credentials and MongoDB instance; execute manual smoke tests |
-| **Production** | Feature flag not required (no existing authenticated users to protect); deploy directly; monitor error logs and session creation metrics for 24 h |
-| **Post-launch (sprint +1)** | Implement automated tests; add custom error page; evaluate rate limiting |
+| Phase                       | Description                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local dev**               | Engineers configure `.env.local` from `.env.example`; validate Google + GitHub flows locally                                                      |
+| **Staging**                 | Deploy to staging environment with production-equivalent OAuth credentials and MongoDB instance; execute manual smoke tests                       |
+| **Production**              | Feature flag not required (no existing authenticated users to protect); deploy directly; monitor error logs and session creation metrics for 24 h |
+| **Post-launch (sprint +1)** | Implement automated tests; add custom error page; evaluate rate limiting                                                                          |
 
 ---
 
@@ -204,28 +204,28 @@ The following are explicitly **not** included in this release:
 
 ### Leading Indicators (detectable immediately post-launch)
 
-| Metric | Target |
-|---|---|
-| Successful OAuth2 callback rate (Google) | ≥ 99% of initiated flows complete without error |
-| Successful OAuth2 callback rate (GitHub) | ≥ 99% of initiated flows complete without error |
-| User document creation rate in MongoDB | 100% of successful logins produce a valid user record |
-| Middleware redirect accuracy | 100% of unauthenticated requests to `/dashboard/*` redirect to `/login` |
-| Session cookie present post-login | 100% of successful logins result in a valid session cookie |
+| Metric                                   | Target                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| Successful OAuth2 callback rate (Google) | ≥ 99% of initiated flows complete without error                         |
+| Successful OAuth2 callback rate (GitHub) | ≥ 99% of initiated flows complete without error                         |
+| User document creation rate in MongoDB   | 100% of successful logins produce a valid user record                   |
+| Middleware redirect accuracy             | 100% of unauthenticated requests to `/dashboard/*` redirect to `/login` |
+| Session cookie present post-login        | 100% of successful logins result in a valid session cookie              |
 
 ### Lagging Indicators (measurable after user adoption)
 
-| Metric | Target |
-|---|---|
-| Auth error rate in production logs | < 1% of all auth attempts |
-| Session expiry-related support tickets | 0 in first 30 days |
-| Duplicate user records in MongoDB | 0 for same-provider logins; documented and tracked for cross-provider edge case |
+| Metric                                 | Target                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| Auth error rate in production logs     | < 1% of all auth attempts                                                       |
+| Session expiry-related support tickets | 0 in first 30 days                                                              |
+| Duplicate user records in MongoDB      | 0 for same-provider logins; documented and tracked for cross-provider edge case |
 
 ---
 
 ## 13. Open Questions
 
-| # | Question | Owner | Due |
-|---|---|---|---|
+| #     | Question                                                                                                                           | Owner   | Due                                               |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------- |
 | OQ-01 | What should happen when a user attempts to link the same email via a second provider? Accept and silently merge, block, or prompt? | Product | Pre-launch (documents expected adapter behaviour) |
-| OQ-02 | What is the desired session `maxAge`? Auth.js v5 default is 30 days. | Product | Before staging deploy |
-| OQ-03 | Is there a preferred redirect destination after successful login? (e.g., `/dashboard`) | Product | Before staging deploy |
+| OQ-02 | What is the desired session `maxAge`? Auth.js v5 default is 30 days.                                                               | Product | Before staging deploy                             |
+| OQ-03 | Is there a preferred redirect destination after successful login? (e.g., `/dashboard`)                                             | Product | Before staging deploy                             |

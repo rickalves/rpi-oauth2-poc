@@ -10,16 +10,16 @@
 
 ## TL;DR
 
-This plan implements social login (Google + GitHub) on a greenfield Next.js 14+ App Router project using Auth.js v5 and MongoDB. Auth.js handles the full OAuth2 Authorization Code + PKCE flow, issues AES-256-GCM encrypted JWTs, and persists user identity via `@auth/mongodb-adapter`. Route protection is enforced at the Edge by a single middleware file; all UI state is available client-side via `SessionProvider`. The implementation spans 13 files across 4 phases and requires no custom OAuth logic.
+This plan implements social login (Google + GitHub) on a greenfield Next.js 14+ App Router project using Auth.js v5 and MongoDB. Auth.js handles the full OAuth2 Authorization Code + PKCE flow, issues AES-256-GCM encrypted JWTs, and persists user identity via `@auth/mongodb-adapter`. Route protection is enforced at the Edge by a single proxy file; all UI state is available client-side via `SessionProvider`. The implementation spans 13 files across 4 phases and requires no custom OAuth logic.
 
 ---
 
 ## Supporting Documents
 
-| Document | Description |
-|---|---|
-| [pm.md](pm.md) | Product requirements, user stories (US-01–US-07), acceptance criteria, functional & non-functional requirements |
-| [ux.md](ux.md) | User flows (sign-in, sign-out, protected route, already-authenticated redirect), screen specs, interaction patterns |
+| Document         | Description                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [pm.md](pm.md)   | Product requirements, user stories (US-01–US-07), acceptance criteria, functional & non-functional requirements                 |
+| [ux.md](ux.md)   | User flows (sign-in, sign-out, protected route, already-authenticated redirect), screen specs, interaction patterns             |
 | [eng.md](eng.md) | Technical architecture, component specifications with full code snippets, data model, auth flow sequence, environment variables |
 
 ---
@@ -81,7 +81,16 @@ openssl rand -base64 32
 ### Phase 1: Project Setup
 
 **Goal**: Scaffold the Next.js application and install all dependencies. No authentication code yet — just a clean slate with the right configuration.  
-**Estimated effort**: 30–45 min
+**Estimated effort**: 30–45 min  
+**Status**: ✅ COMPLETE — 2026-03-31
+
+| Check                             | Result                       |
+| --------------------------------- | ---------------------------- |
+| Unit tests (`npm test`)           | ✅ 24/24 passed              |
+| Lint (`npx eslint src/ tests/`)   | ✅ 0 errors, 0 warnings      |
+| Format (`npm run format:check`)   | ✅ All files formatted       |
+| TypeScript (`npm run type-check`) | ✅ 0 errors                  |
+| Test file                         | `tests/phase1/setup.test.ts` |
 
 ---
 
@@ -90,6 +99,7 @@ openssl rand -base64 32
 **Files affected**: scaffolded by `create-next-app` (entire `src/` tree, `package.json`, `tsconfig.json`, `tailwind.config.ts`, `.eslintrc.json`, `next.config.ts`, `.gitignore`)
 
 **Command**:
+
 ```bash
 npx create-next-app@latest . --typescript --tailwind --app --eslint --src-dir
 ```
@@ -97,14 +107,16 @@ npx create-next-app@latest . --typescript --tailwind --app --eslint --src-dir
 When prompted, accept all defaults. The `--src-dir` flag places all application code under `src/`, which is assumed throughout this plan.
 
 **Key implementation notes**:
+
 - Use `.` (current directory) as the target — do not create a subdirectory
 - The `--app` flag selects the App Router; do **not** select Pages Router
 - The scaffolded `src/app/layout.tsx` and `src/app/page.tsx` will be **replaced** in Phase 3
 
 **Acceptance check**:
-- [ ] `npm run dev` starts without errors on `http://localhost:3000`
-- [ ] `src/app/layout.tsx` exists with the App Router root layout structure
-- [ ] `tsconfig.json` includes `"paths": { "@/*": ["./src/*"] }` (required for `@/` imports)
+
+- [ ] `npm run dev` starts without errors on `http://localhost:3000` _(manual — start server and verify in browser)_
+- [x] `src/app/layout.tsx` exists with the App Router root layout structure ✅ `setup.test.ts`
+- [x] `tsconfig.json` includes `"paths": { "@/*": ["./src/*"] }` (required for `@/` imports) ✅ `setup.test.ts`
 
 ---
 
@@ -113,20 +125,23 @@ When prompted, accept all defaults. The `--src-dir` flag places all application 
 **Files affected**: `package.json`, `package-lock.json`
 
 **Command**:
+
 ```bash
 npm install next-auth@beta @auth/mongodb-adapter mongodb
 ```
 
 **Key implementation notes**:
+
 - `next-auth@beta` is Auth.js v5 — the App Router-native version. Do **not** install `next-auth@latest` (v4); v4 does not support App Router natively
 - Pin the exact installed version in `package.json` after install (check `package-lock.json`) to avoid regressions from beta updates: `"next-auth": "5.0.0-beta.X"`
 - `@auth/mongodb-adapter` and `mongodb` are both required; the adapter does not bundle the driver
 
 **Acceptance check**:
-- [ ] `node_modules/next-auth` exists
-- [ ] `node_modules/@auth/mongodb-adapter` exists
-- [ ] `node_modules/mongodb` exists
-- [ ] `npm run build` produces no missing-module errors
+
+- [x] `node_modules/next-auth` exists ✅ `setup.test.ts`
+- [x] `node_modules/@auth/mongodb-adapter` exists ✅ `setup.test.ts`
+- [x] `node_modules/mongodb` exists ✅ `setup.test.ts`
+- [ ] `npm run build` produces no missing-module errors _(manual — requires `.env.local` with real credentials)_
 
 ---
 
@@ -135,6 +150,7 @@ npm install next-auth@beta @auth/mongodb-adapter mongodb
 **Files affected**: `.env.local` (created, git-ignored)
 
 **Create `.env.local`**:
+
 ```bash
 AUTH_SECRET=<output of `npx auth secret`>
 AUTH_GOOGLE_ID=<Google client ID>
@@ -145,15 +161,17 @@ MONGODB_URI=<MongoDB connection string>
 ```
 
 **Key implementation notes**:
+
 - `AUTH_SECRET` is used by Auth.js v5 for JWT signing/encryption (AES-256-GCM). Minimum 32 bytes of entropy; never reuse between environments
 - Auth.js v5 reads `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` automatically when you use the `Google()` provider without explicit `clientId`/`clientSecret` props — but the `eng.md` spec uses explicit props for clarity; both approaches work
 - `MONGODB_URI` must include the database name: `mongodb+srv://user:pass@cluster.mongodb.net/mydb`
 - Confirm `.gitignore` includes `.env.local` (Next.js scaffolding does this by default — verify in Task 17)
 
 **Acceptance check**:
-- [ ] `.env.local` exists at the project root
-- [ ] All 6 variables are populated with real values
-- [ ] `git status` does **not** show `.env.local` as a tracked file
+
+- [ ] `.env.local` exists at the project root _(manual — copy `.env.example` and fill in real credentials)_
+- [ ] All 6 variables are populated with real values _(manual — requires OAuth app and MongoDB credentials)_
+- [x] `git status` does **not** show `.env.local` as a tracked file ✅ `.env*` + `!.env.example` in `.gitignore` · `setup.test.ts`
 
 ---
 
@@ -162,6 +180,7 @@ MONGODB_URI=<MongoDB connection string>
 **Files affected**: `.env.example` (new, committed to source control)
 
 **Content**:
+
 ```bash
 # Auth.js v5 — required for JWT signing/encryption
 # Generate with: npx auth secret
@@ -183,20 +202,22 @@ MONGODB_URI=
 ```
 
 **Key implementation notes**:
+
 - All values must be **empty** — this file documents required variables without exposing secrets
 - Include comments that tell the engineer exactly where to obtain each value
 - This file **is** committed to source control
 
 **Acceptance check**:
-- [ ] `.env.example` exists at the project root with all 6 variables and empty values
-- [ ] Comments point to the correct external resources
-- [ ] `git status` shows `.env.example` as a tracked (not ignored) file
+
+- [x] `.env.example` exists at the project root with all 6 variables and empty values ✅ `setup.test.ts`
+- [x] Comments point to the correct external resources ✅ `setup.test.ts`
+- [x] `git status` shows `.env.example` as a tracked (not ignored) file ✅ `!.env.example` negation added to `.gitignore` · `setup.test.ts`
 
 ---
 
 ### Phase 2: Infrastructure
 
-**Goal**: Wire up the MongoDB connection, Auth.js core configuration, the Next.js route handler, and the Edge middleware. No UI changes in this phase — the app is not yet navigable.  
+**Goal**: Wire up the MongoDB connection, Auth.js core configuration, the Next.js route handler, and the Edge proxy. No UI changes in this phase — the app is not yet navigable.  
 **Estimated effort**: 45–60 min
 
 ---
@@ -244,6 +265,7 @@ export default clientPromise;
 - The `throw` on missing URI fails fast at startup rather than at the first auth operation
 
 **Acceptance check**:
+
 - [ ] File compiles without TypeScript errors (`npx tsc --noEmit`)
 - [ ] Importing the file in a test script and awaiting the promise connects to MongoDB without error
 
@@ -294,6 +316,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 - `AUTH_SECRET` is read automatically by Auth.js v5 from the environment — do not pass it explicitly
 
 **Acceptance check**:
+
 - [ ] File compiles without TypeScript errors
 - [ ] No TypeScript error on `session.user.id` assignment (requires Task 16 to fully resolve; can stub for now)
 
@@ -314,14 +337,15 @@ export const { GET, POST } = handlers;
 That is the complete file. Do not add any logic here — all configuration lives in `src/auth.ts`. The `[...nextauth]` catch-all segment matches all `/api/auth/*` paths: `/api/auth/signin`, `/api/auth/callback/google`, `/api/auth/callback/github`, `/api/auth/signout`, `/api/auth/session`, `/api/auth/csrf`.
 
 **Acceptance check**:
+
 - [ ] `GET http://localhost:3000/api/auth/providers` returns a JSON object listing `google` and `github` providers
 - [ ] `GET http://localhost:3000/api/auth/csrf` returns a CSRF token JSON object
 
 ---
 
-#### Task 8 — Create Middleware (`src/middleware.ts`)
+#### Task 8 — Create Proxy (`src/proxy.ts`)
 
-**Files affected**: `src/middleware.ts` (new)
+**Files affected**: `src/proxy.ts` (new)
 
 **Key implementation notes**:
 
@@ -343,13 +367,14 @@ export const config = {
 - `auth` used as middleware is an Auth.js v5 pattern — it decrypts and validates the session JWT and attaches it to `req.auth` before invoking the handler function
 - The handler function only runs for matched routes. For `/dashboard/:path*`, any unauthenticated request redirects to `/login`
 - **Do not** add `callbackUrl` to the redirect in v1 — return URL preservation is in the post-launch backlog
-- The middleware runs on the **Edge runtime**. Do not import any Node.js-only APIs (fs, crypto, etc.) inside it. The `@/auth` import is safe because Auth.js v5 is Edge-compatible
+- The proxy runs on the **Edge runtime**. Do not import any Node.js-only APIs (fs, crypto, etc.) inside it. The `@/auth` import is safe because Auth.js v5 is Edge-compatible
 - To protect additional routes in the future, add paths to the `matcher` array
 
 **Acceptance check**:
+
 - [ ] `GET http://localhost:3000/dashboard` (unauthenticated) returns a 302 redirect to `/login`
 - [ ] File compiles without TypeScript errors
-- [ ] `npm run build` passes (middleware is type-checked separately)
+- [ ] `npm run build` passes (proxy is type-checked separately)
 
 ---
 
@@ -380,6 +405,7 @@ export default function Providers({ children }: { children: ReactNode }) {
 This wrapper is required because `SessionProvider` from `next-auth/react` uses React Context (`useContext`) internally and therefore **must** be a Client Component. The root `layout.tsx` is a Server Component and cannot use Client Components directly without this boundary.
 
 **Acceptance check**:
+
 - [ ] File has `"use client"` as its first line
 - [ ] File compiles without TypeScript errors
 - [ ] No warnings about using Context in a Server Component
@@ -422,6 +448,7 @@ export default function RootLayout({
 - Remove any `next/font` imports from the scaffolded layout if present — they are not needed for this POC
 
 **Acceptance check**:
+
 - [ ] `useSession()` called in any Client Component descendant does not throw "SessionProvider not found"
 - [ ] Page renders without console errors related to SessionProvider
 
@@ -468,6 +495,7 @@ export default function LoginPage() {
 - The provider string (`"google"`, `"github"`) must exactly match the provider ID registered in `src/auth.ts`
 
 **Acceptance check**:
+
 - [ ] `GET http://localhost:3000/login` renders the page with two buttons
 - [ ] Clicking "Sign in with Google" redirects to `accounts.google.com`
 - [ ] Clicking "Sign in with GitHub" redirects to `github.com/login/oauth/authorize`
@@ -529,6 +557,7 @@ export default function Header() {
 - `signOut({ callbackUrl: "/" })` destroys the server-side session cookie and redirects to `/`
 
 **Acceptance check**:
+
 - [ ] Authenticated: displays user avatar, name, and "Sign out" button
 - [ ] Unauthenticated: displays "Sign in" link
 - [ ] Clicking "Sign out" clears the session and redirects to `/`
@@ -564,13 +593,14 @@ export default async function DashboardPage() {
 ```
 
 - This is a **Server Component** (no `"use client"`). `auth()` is the Auth.js v5 server-side session accessor — equivalent to `getServerSession()` in v4 but without passing the config object
-- The middleware (Task 8) guarantees that any request reaching this component has a valid session. It is safe to display `session?.user` without a null-guard redirect here, though the null coalescing is kept for TypeScript safety
+- The proxy (Task 8) guarantees that any request reaching this component has a valid session. It is safe to display `session?.user` without a null-guard redirect here, though the null coalescing is kept for TypeScript safety
 - Do **not** call `getServerSession()` (v4 API) here — use `auth()` (v5 API)
 
 **Acceptance check**:
+
 - [ ] Authenticated user sees their name, email, and avatar URL in the JSON block
 - [ ] `session.user.id` is present in the JSON output (confirms the `jwt` + `session` callbacks in Task 6 are working)
-- [ ] Unauthenticated access to `/dashboard` redirects to `/login` (confirmed via middleware, not this component)
+- [ ] Unauthenticated access to `/dashboard` redirects to `/login` (confirmed via proxy, not this component)
 
 ---
 
@@ -615,10 +645,11 @@ export default function HomePage() {
 ```
 
 - This is a **Server Component** (no `"use client"`)
-- "Dashboard" link works as a secondary CTA — if the user is not authenticated, middleware redirects them to `/login` automatically
+- "Dashboard" link works as a secondary CTA — if the user is not authenticated, proxy redirects them to `/login` automatically
 - The `Header` component is included here so the authenticated state is visible on the landing page
 
 **Acceptance check**:
+
 - [ ] `GET http://localhost:3000` renders the landing page with both CTAs
 - [ ] Header shows unauthenticated state for guest, authenticated state for signed-in user
 
@@ -638,6 +669,7 @@ export default function HomePage() {
 **Key implementation notes**:
 
 Auth.js v5 provides CSRF protection natively via the **double-submit cookie pattern**:
+
 1. A CSRF token is generated server-side and stored in an HTTP-only cookie
 2. The same token is embedded in sign-in form submissions
 3. Auth.js validates that the cookie value matches the submitted value before processing any sign-in or sign-out action
@@ -646,6 +678,7 @@ Auth.js v5 provides CSRF protection natively via the **double-submit cookie patt
 No additional code is required. Verify the mechanism is active by inspecting the response from `GET /api/auth/csrf` and confirming the `next-auth.csrf-token` cookie is set.
 
 **Acceptance check**:
+
 - [ ] `GET http://localhost:3000/api/auth/csrf` returns `{ "csrfToken": "<hex string>" }`
 - [ ] `next-auth.csrf-token` cookie is present in browser DevTools after visiting any Auth.js endpoint
 - [ ] A POST to `/api/auth/signin/google` without the CSRF token returns a 400 error (Auth.js rejects it)
@@ -682,6 +715,7 @@ declare module "next-auth/jwt" {
 - `tsconfig.json` must include `"typeRoots": ["./src/types", "./node_modules/@types"]` or include the file via `"include"` — verify the scaffold's `tsconfig.json` covers `src/**/*`
 
 **Acceptance check**:
+
 - [ ] `npx tsc --noEmit` passes with zero errors
 - [ ] `session.user.id` is accessible without type assertion in `src/app/dashboard/page.tsx`
 - [ ] `token.userId` is accessible without type assertion in the `jwt` callback in `src/auth.ts`
@@ -701,16 +735,19 @@ grep -n ".env.local" .gitignore
 ```
 
 If the line is missing, add it:
+
 ```bash
 echo "\n# local env file\n.env.local" >> .gitignore
 ```
 
 Also confirm the following entries are present (all should be in the scaffold-generated file):
+
 - `.env*.local`
 - `node_modules/`
 - `.next/`
 
 **Acceptance check**:
+
 - [ ] `git status` does not list `.env.local` as a tracked or untracked file to be committed
 - [ ] `git check-ignore -v .env.local` confirms the file is ignored
 - [ ] `.env.example` **is** tracked by git (confirm with `git status --short .env.example`)
@@ -719,21 +756,21 @@ Also confirm the following entries are present (all should be in the scaffold-ge
 
 ## File Manifest
 
-| # | File Path | Type | Description |
-|---|---|---|---|
-| 1 | `.env.local` | New | Runtime secrets — AUTH_SECRET, provider credentials, MONGODB_URI (git-ignored) |
-| 2 | `.env.example` | New | Committed template documenting all required environment variables with empty values |
-| 3 | `src/lib/mongodb.ts` | New | MongoClient singleton with `global` reuse in dev to prevent hot-reload connection exhaustion |
-| 4 | `src/auth.ts` | New | Central Auth.js v5 config — Google + GitHub providers, MongoDBAdapter, JWT strategy, session/jwt callbacks |
-| 5 | `src/app/api/auth/[...nextauth]/route.ts` | New | Next.js App Router handler exporting `GET` and `POST` from Auth.js `handlers` |
-| 6 | `src/middleware.ts` | New | Edge middleware using `auth` to protect `/dashboard/:path*`; redirects unauthenticated requests to `/login` |
-| 7 | `src/components/providers/session-provider.tsx` | New | `"use client"` wrapper around Auth.js `SessionProvider` enabling use in Server Component layout |
-| 8 | `src/app/layout.tsx` | Modify | Root layout — wraps `children` with `SessionProvider` so `useSession()` is available app-wide |
-| 9 | `src/app/login/page.tsx` | New | Public login page with "Sign in with Google" and "Sign in with GitHub" buttons |
-| 10 | `src/components/header.tsx` | New | Auth-aware header — shows user name/avatar + sign-out when authenticated, sign-in link when not |
-| 11 | `src/app/dashboard/page.tsx` | New | Protected Server Component dashboard displaying `session.user` data (name, email, image, id) |
-| 12 | `src/app/page.tsx` | Modify | Landing page hero with CTAs linking to `/login` and `/dashboard` |
-| 13 | `src/types/next-auth.d.ts` | New | TypeScript module augmentation extending `Session.user` with `id` and `JWT` with `userId` |
+| #   | File Path                                       | Type   | Description                                                                                                |
+| --- | ----------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| 1   | `.env.local`                                    | New    | Runtime secrets — AUTH_SECRET, provider credentials, MONGODB_URI (git-ignored)                             |
+| 2   | `.env.example`                                  | New    | Committed template documenting all required environment variables with empty values                        |
+| 3   | `src/lib/mongodb.ts`                            | New    | MongoClient singleton with `global` reuse in dev to prevent hot-reload connection exhaustion               |
+| 4   | `src/auth.ts`                                   | New    | Central Auth.js v5 config — Google + GitHub providers, MongoDBAdapter, JWT strategy, session/jwt callbacks |
+| 5   | `src/app/api/auth/[...nextauth]/route.ts`       | New    | Next.js App Router handler exporting `GET` and `POST` from Auth.js `handlers`                              |
+| 6   | `src/proxy.ts`                                  | New    | Edge proxy using `auth` to protect `/dashboard/:path*`; redirects unauthenticated requests to `/login`     |
+| 7   | `src/components/providers/session-provider.tsx` | New    | `"use client"` wrapper around Auth.js `SessionProvider` enabling use in Server Component layout            |
+| 8   | `src/app/layout.tsx`                            | Modify | Root layout — wraps `children` with `SessionProvider` so `useSession()` is available app-wide              |
+| 9   | `src/app/login/page.tsx`                        | New    | Public login page with "Sign in with Google" and "Sign in with GitHub" buttons                             |
+| 10  | `src/components/header.tsx`                     | New    | Auth-aware header — shows user name/avatar + sign-out when authenticated, sign-in link when not            |
+| 11  | `src/app/dashboard/page.tsx`                    | New    | Protected Server Component dashboard displaying `session.user` data (name, email, image, id)               |
+| 12  | `src/app/page.tsx`                              | Modify | Landing page hero with CTAs linking to `/login` and `/dashboard`                                           |
+| 13  | `src/types/next-auth.d.ts`                      | New    | TypeScript module augmentation extending `Session.user` with `id` and `JWT` with `userId`                  |
 
 ---
 
@@ -749,7 +786,7 @@ Task 1 (scaffold)
         ├── Task 5 (mongodb.ts)
         │     └── Task 6 (auth.ts)
         │           ├── Task 7 (route handler)        ← unblocks OAuth callbacks
-        │           ├── Task 8 (middleware)            ← unblocks route protection
+        │           ├── Task 8 (proxy)                ← unblocks route protection
         │           └── Task 16 (types) ──────────────← unblocks TS errors in Task 6
         └── [Task 6 resolved]
               ├── Task 9 (session-provider.tsx)
@@ -764,14 +801,14 @@ Task 17 (.gitignore) — independent, can be done at any point
 
 **Key blocking relationships**:
 
-| Blocker | Blocked By | Reason |
-|---|---|---|
-| Task 1 | All tasks | Cannot install, configure, or write code without the scaffolded project |
-| Task 2 | Tasks 5, 6, 7, 8, 9, 11, 12, 13 | All auth imports require the installed packages |
-| Task 5 | Task 6 | `src/auth.ts` imports `clientPromise` from `src/lib/mongodb.ts` |
-| Task 6 | Tasks 7, 8, 13, 15, 16 | Route handler, middleware, dashboard, and CSRF check all depend on exports from `src/auth.ts` |
-| Task 9 | Task 10 | Layout imports `Providers` from `session-provider.tsx` |
-| Task 10 | Tasks 11, 12, 13, 14 | All UI components that call `useSession()` require the provider to be in the tree |
+| Blocker | Blocked By                      | Reason                                                                                   |
+| ------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| Task 1  | All tasks                       | Cannot install, configure, or write code without the scaffolded project                  |
+| Task 2  | Tasks 5, 6, 7, 8, 9, 11, 12, 13 | All auth imports require the installed packages                                          |
+| Task 5  | Task 6                          | `src/auth.ts` imports `clientPromise` from `src/lib/mongodb.ts`                          |
+| Task 6  | Tasks 7, 8, 13, 15, 16          | Route handler, proxy, dashboard, and CSRF check all depend on exports from `src/auth.ts` |
+| Task 9  | Task 10                         | Layout imports `Providers` from `session-provider.tsx`                                   |
+| Task 10 | Tasks 11, 12, 13, 14            | All UI components that call `useSession()` require the provider to be in the tree        |
 
 ---
 
@@ -800,7 +837,7 @@ npm run dev   # must start without errors on http://localhost:3000
 
 1. In the same incognito window, navigate directly to `http://localhost:3000/dashboard`
 2. **Expected**: Immediately redirected to `http://localhost:3000/login`
-3. **Expected**: No flash of the dashboard content before redirect (middleware fires at Edge)
+3. **Expected**: No flash of the dashboard content before redirect (proxy fires at Edge)
 
 ---
 
@@ -839,7 +876,7 @@ npm run dev   # must start without errors on http://localhost:3000
 2. **Expected**: Redirected to `http://localhost:3000/`
 3. **Expected**: Header shows "Sign in" link (session cleared)
 4. Navigate to `http://localhost:3000/dashboard`
-5. **Expected**: Redirected to `/login` (session is gone, middleware fires)
+5. **Expected**: Redirected to `/login` (session is gone, proxy fires)
 
 ---
 
@@ -887,13 +924,13 @@ npm run build
 
 ## Post-Launch Backlog
 
-| Priority | Item | Notes |
-|---|---|---|
-| **P0** | Automated test coverage | Login flows, middleware protection, session validation, logout. No automated tests ship with v1; regressions are caught only by manual checklist. Schedule immediately after v1 ships |
-| **P0** | Return URL preservation (`callbackUrl`) | Currently the middleware does not append `callbackUrl` to the `/login` redirect, so direct-URL access loses the intended destination after sign-in |
-| **P1** | Custom error page for auth failures | Auth.js errors (OAuthCallback, OAuthAccountNotLinked, etc.) currently redirect to the default Auth.js error page. A custom `/auth/error` page matching the app's design should be added |
-| **P1** | Rate limiting on auth endpoints | `/api/auth/*` endpoints have no rate limiting in v1. Add per-IP rate limiting at the edge (e.g., via Vercel middleware or an upstream CDN rule) before production traffic |
-| **P1** | MongoDB connection retry logic | `src/lib/mongodb.ts` has no retry or connection health check. For production, add `serverSelectionTimeoutMS`, `connectTimeoutMS`, and a health endpoint |
-| **P2** | Account linking across providers | A user who signs in with Google and later with GitHub using the same email address may encounter an `OAuthAccountNotLinked` error. Design and implement a provider-linking UX |
-| **P2** | Session `maxAge` configuration | Currently uses Auth.js v5 default (30 days). Align with product decision on session duration before production deploy |
-| **P2** | Additional OAuth providers | Twitter/X, Microsoft, Apple, or other providers can be added to `src/auth.ts` with minimal effort once the core infrastructure is in place |
+| Priority | Item                                    | Notes                                                                                                                                                                                   |
+| -------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0**   | Automated test coverage                 | Login flows, proxy protection, session validation, logout. No automated tests ship with v1; regressions are caught only by manual checklist. Schedule immediately after v1 ships        |
+| **P0**   | Return URL preservation (`callbackUrl`) | Currently the proxy does not append `callbackUrl` to the `/login` redirect, so direct-URL access loses the intended destination after sign-in                                           |
+| **P1**   | Custom error page for auth failures     | Auth.js errors (OAuthCallback, OAuthAccountNotLinked, etc.) currently redirect to the default Auth.js error page. A custom `/auth/error` page matching the app's design should be added |
+| **P1**   | Rate limiting on auth endpoints         | `/api/auth/*` endpoints have no rate limiting in v1. Add per-IP rate limiting at the edge (e.g., via Vercel middleware or an upstream CDN rule) before production traffic               |
+| **P1**   | MongoDB connection retry logic          | `src/lib/mongodb.ts` has no retry or connection health check. For production, add `serverSelectionTimeoutMS`, `connectTimeoutMS`, and a health endpoint                                 |
+| **P2**   | Account linking across providers        | A user who signs in with Google and later with GitHub using the same email address may encounter an `OAuthAccountNotLinked` error. Design and implement a provider-linking UX           |
+| **P2**   | Session `maxAge` configuration          | Currently uses Auth.js v5 default (30 days). Align with product decision on session duration before production deploy                                                                   |
+| **P2**   | Additional OAuth providers              | Twitter/X, Microsoft, Apple, or other providers can be added to `src/auth.ts` with minimal effort once the core infrastructure is in place                                              |

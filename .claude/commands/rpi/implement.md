@@ -16,6 +16,7 @@ You **MUST** parse the user input to extract the feature slug (the folder name i
 This command executes phased implementation of features based on planning documentation. It orchestrates specialized agents, enforces validation gates, and ensures constitutional compliance throughout implementation.
 
 **Prerequisites**:
+
 - Feature folder exists at `rpi/{feature-slug}/`
 - Planning completed (`rpi/{feature-slug}/plan/PLAN.md` exists)
 
@@ -35,18 +36,18 @@ All agents use **Opus model** for maximum quality.
 
 ### Implementation Agent
 
-| Agent | Type | When to Use |
-|-------|------|-------------|
+| Agent                      | Type   | When to Use              |
+| -------------------------- | ------ | ------------------------ |
 | `senior-software-engineer` | Custom | All implementation tasks |
 
 ### Support Agents
 
-| Agent | Type | Purpose |
-|-------|------|---------|
-| `Explore` | Built-in | Pre-implementation code exploration |
-| `code-reviewer` | Custom | Code review and quality validation |
-| `constitutional-validator` | Custom | Validate against project constitution |
-| `documentation-analyst-writer` | Built-in | Documentation generation |
+| Agent                          | Type     | Purpose                               |
+| ------------------------------ | -------- | ------------------------------------- |
+| `Explore`                      | Built-in | Pre-implementation code exploration   |
+| `code-reviewer`                | Custom   | Code review and quality validation    |
+| `constitutional-validator`     | Custom   | Validate against project constitution |
+| `documentation-analyst-writer` | Built-in | Documentation generation              |
 
 ### Agent Routing
 
@@ -72,6 +73,7 @@ All implementation tasks are handled by the `senior-software-engineer` agent.
 ### 0.2 Load Domain-Specific Guidelines
 
 Based on files to be modified, load relevant project guidelines:
+
 - Check for component-specific README files
 - Check for coding style guides
 - Check for testing requirements documentation
@@ -83,12 +85,14 @@ Based on files to be modified, load relevant project guidelines:
 3. Map files to implementation agent
 
 **Outputs**:
+
 - Constitutional context summary
 - Domain rules loaded
 - File-to-agent mapping
 - Phase execution plan
 
 **Validation**:
+
 - [ ] Constitution loaded (if exists)
 - [ ] Domain rules loaded for affected files
 - [ ] All files mapped to agents
@@ -140,11 +144,13 @@ For each phase in PLAN.md:
 **Purpose**: Ground implementation in code reality before making changes.
 
 **Process**:
+
 1. Launch Explore agent via Task tool with `subagent_type="Explore"`
 2. Request analysis of files affected by current phase
 3. Understand existing patterns, integration points, constraints
 
 **Explore Agent Prompt**:
+
 ```
 Analyze the codebase to prepare for implementing Phase N of [feature-name].
 
@@ -190,12 +196,14 @@ Provide a discovery summary to inform implementation.
 **Agent**: senior-software-engineer
 
 **Process**:
+
 1. Use senior-software-engineer agent
 2. Provide discovery context from Step 1
 3. Implement all deliverables for the phase
 4. Follow constitutional constraints and project rules
 
 **Implementation Agent Prompt Template**:
+
 ```
 Acting as the [agent-name] agent, implement Phase N deliverables for [feature-name].
 
@@ -236,6 +244,7 @@ Implement all deliverables and report what was done.
 **Agent**: senior-software-engineer (same as Step 2)
 
 **Process**:
+
 1. Agent validates implementation against phase checklist
 2. Run linting (use project's configured linter)
 3. Run tests relevant to changes
@@ -255,6 +264,7 @@ Implement all deliverables and report what was done.
 ```
 
 **Self-Validation Checklist**:
+
 - [ ] All deliverables implemented
 - [ ] Linting passes
 - [ ] Tests pass
@@ -270,11 +280,13 @@ Implement all deliverables and report what was done.
 **Agent**: code-reviewer (Custom, auto-invoked)
 
 **Process**:
+
 1. Invoke code-reviewer agent to review changes
 2. Focus on correctness, security, maintainability
 3. Address blockers before proceeding
 
 **Code Review Agent Prompt**:
+
 ```
 Acting as the code-reviewer agent, review the Phase N implementation for [feature-name].
 
@@ -297,6 +309,7 @@ Provide review using standard output format.
 ```
 
 **Review Verdicts**:
+
 - **APPROVED**: Proceed to user validation
 - **APPROVED WITH SUGGESTIONS**: Note suggestions, proceed
 - **NEEDS REVISION**: Fix issues, re-review
@@ -308,6 +321,7 @@ Provide review using standard output format.
 **CRITICAL**: This step REQUIRES user interaction. DO NOT proceed automatically.
 
 **Process**:
+
 1. Present phase deliverables checklist
 2. Show what was implemented (files changed, features added)
 3. Present validation criteria from PLAN.md
@@ -315,6 +329,7 @@ Provide review using standard output format.
 5. **STOP and wait for user decision**
 
 **Validation Request Format**:
+
 ```
 ## Phase N Validation Request
 
@@ -351,6 +366,7 @@ Provide review using standard output format.
 ```
 
 **User Decisions**:
+
 - **PASS**: Proceed to next phase
 - **CONDITIONAL PASS**: Document issues, proceed to next phase
 - **FAIL**: Fix issues, re-run Steps 2-5
@@ -360,6 +376,7 @@ Provide review using standard output format.
 ## Step 6: Documentation Update
 
 **Process**:
+
 1. Update `rpi/{feature-slug}/plan/PLAN.md` with phase status
 2. Update `rpi/{feature-slug}/implement/IMPLEMENT.md` with validation results
 3. Append each phase's validation to IMPLEMENT.md
@@ -367,6 +384,7 @@ Provide review using standard output format.
 ### Phase Status Tracking
 
 Update checkboxes in PLAN.md:
+
 ```markdown
 - [ ] Phase N: Not Started
 - [~] Phase N: In Progress
@@ -392,24 +410,30 @@ Update checkboxes in PLAN.md:
 **Verdict**: [PASS / CONDITIONAL PASS / FAIL]
 
 ### Deliverables
+
 - [x] [Deliverable 1]
 - [x] [Deliverable 2]
 
 ### Files Changed
+
 [List with line counts]
 
 ### Test Results
+
 [Test output summary]
 
 ### Code Review
+
 [Review verdict and notes]
 
 ### Notes
+
 [Any additional notes]
 
 ---
 
 ## Phase 2: [Phase Name]
+
 [Same structure as Phase 1...]
 
 ---
@@ -427,6 +451,7 @@ Update checkboxes in PLAN.md:
 ### Implementation Failures
 
 **If implementation fails**:
+
 1. Document the specific failure
 2. Analyze root cause
 3. Try alternative approach (max 2 attempts)
@@ -438,6 +463,7 @@ Update checkboxes in PLAN.md:
 ### Test Failures
 
 **If tests fail**:
+
 1. Analyze failure cause (code bug vs test bug)
 2. Fix the issue
 3. Re-run tests
@@ -449,6 +475,7 @@ Update checkboxes in PLAN.md:
 ### Build Failures
 
 **If build fails**:
+
 1. Check for type errors
 2. Check for missing imports
 3. Check for syntax errors
@@ -460,6 +487,7 @@ Update checkboxes in PLAN.md:
 ### Agent Failures
 
 **If agent fails or times out**:
+
 1. Retry once with same inputs
 2. If still failing, proceed without that agent's contribution
 3. Document gap in validation request
@@ -476,39 +504,47 @@ On successful completion of all phases:
 ## Implementation Complete
 
 ### Feature Summary
+
 - **Feature**: [feature-name]
 - **Phases Completed**: [N] of [N]
 
 ### Phases Executed
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1 | PASS | [summary] |
-| Phase 2 | PASS | [summary] |
-| ... | ... | ... |
+
+| Phase   | Status | Notes     |
+| ------- | ------ | --------- |
+| Phase 1 | PASS   | [summary] |
+| Phase 2 | PASS   | [summary] |
+| ...     | ...    | ...       |
 
 ### Files Modified
-| File | Change Type | Lines |
-|------|-------------|-------|
-| [file] | [type] | [±N] |
+
+| File   | Change Type | Lines |
+| ------ | ----------- | ----- |
+| [file] | [type]      | [±N]  |
 
 ### Tests Added
+
 - [test files]
 
 ### Code Review Summary
+
 - Blockers Fixed: [N]
 - Suggestions Addressed: [N]
 
 ### Constitutional Compliance
+
 - [ ] Type safety maintained
 - [ ] Tests written
 - [ ] Component isolation respected
 - [ ] No breaking changes
 
 ### Artifacts Created
+
 - `rpi/{feature-slug}/plan/PLAN.md` (updated with phase status)
 - `rpi/{feature-slug}/implement/IMPLEMENT.md` (all phase validations)
 
 ### Next Steps
+
 1. Create PR with changes
 2. Request final human review
 3. Deploy to staging
@@ -523,15 +559,19 @@ On successful completion of all phases:
 [What was implemented]
 
 **Changes**:
+
 - [List key changes]
 
 **Testing**:
+
 - [How tested]
 
 **Rollout**:
+
 - [Deployment steps]
 
 **Rollback**:
+
 - [Rollback procedure if issues]
 ```
 
@@ -629,6 +669,7 @@ Step 4 of 4 (Describe → Research → Plan → **Implement**)
 > This will summarize the conversation and preserve implementation status while reducing token usage for future work.
 
 **When to prompt for compact**:
+
 - After all phases are complete
 - After completing each major phase (if multi-session implementation)
 - If context is running low during implementation

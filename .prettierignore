@@ -1,0 +1,7 @@
+.next
+node_modules
+public
+*.svg
+*.png
+*.jpg
+package-lock.json

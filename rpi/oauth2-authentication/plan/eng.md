@@ -11,7 +11,7 @@
 
 This document specifies the complete implementation of social login (Google + GitHub) for a greenfield Next.js 14+ App Router project. Auth.js v5 handles the OAuth2 authorization code flow with PKCE, issues encrypted JWTs (AES-256-GCM), and persists user identity in MongoDB via the official adapter. No email/password, MFA, or RBAC is in scope for v1.
 
-The implementation spans 13 files across four concerns: infrastructure (MongoDB singleton, Auth.js core config), Next.js wiring (route handler, middleware, layout), UI (login page, dashboard, header, landing page), and type safety (TypeScript extensions, environment). Middleware enforces route protection at the edge before any React rendering occurs.
+The implementation spans 13 files across four concerns: infrastructure (MongoDB singleton, Auth.js core config), Next.js wiring (route handler, proxy, layout), UI (login page, dashboard, header, landing page), and type safety (TypeScript extensions, environment). Proxy enforces route protection at the edge before any React rendering occurs.
 
 ---
 
@@ -61,7 +61,7 @@ login/page.tsx        (public, triggers signIn)
 dashboard/page.tsx    (protected, reads session)
   └── header.tsx      (auth-aware, calls signOut)
 
-middleware.ts
+proxy.ts
   └── auth (from src/auth.ts)
 
 src/auth.ts
@@ -84,7 +84,7 @@ src/types/next-auth.d.ts  (augments Session + JWT types)
 ```
 src/
 ├── auth.ts                                  # Auth.js core config (providers, adapter, callbacks)
-├── middleware.ts                            # Edge route protection, path matcher
+├── proxy.ts                                 # Edge route protection, path matcher
 ├── types/
 │   └── next-auth.d.ts                      # TypeScript module augmentation for Session/JWT
 ├── lib/
@@ -225,11 +225,11 @@ No additional logic lives here. All configuration is in `src/auth.ts`.
 
 ---
 
-### `src/middleware.ts`
+### `src/proxy.ts`
 
 **Purpose**: Intercepts requests at the Edge before rendering. Rejects unauthenticated requests to protected routes by redirecting to `/login`.
 
-**Key exports**: `default` (middleware function), `config` (matcher)
+**Key exports**: `default` (proxy function), `config` (matcher)
 
 **Dependencies**: `src/auth`
 
@@ -250,7 +250,7 @@ export const config = {
 
 - `auth` used as middleware is an Auth.js v5 pattern — it attaches `req.auth` (the session) before calling the handler.
 - The matcher uses Next.js path patterns; add new protected routes to the array as the app grows.
-- The middleware runs on the Edge runtime; avoid Node.js-only APIs inside it.
+- The proxy runs on the Edge runtime; avoid Node.js-only APIs inside it.
 
 ---
 
@@ -292,7 +292,11 @@ import "./globals.css";
 
 export const metadata: Metadata = { title: "RPI OAuth2 Demo" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -369,7 +373,9 @@ export default function Header() {
             />
           )}
           <span>{session.user.name}</span>
-          <button onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
+          <button onClick={() => signOut({ callbackUrl: "/" })}>
+            Sign out
+          </button>
         </div>
       ) : (
         <a href="/login">Sign in</a>
@@ -383,7 +389,7 @@ export default function Header() {
 
 ### `src/app/dashboard/page.tsx`
 
-**Purpose**: Protected example page. Auth enforced by middleware — this component can assume a valid session exists. Reads session server-side via `auth()`.
+**Purpose**: Protected example page. Auth enforced by proxy — this component can assume a valid session exists. Reads session server-side via `auth()`.
 
 **Key exports**: `default DashboardPage`
 
@@ -430,7 +436,10 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-6">
       <h1 className="text-3xl font-bold">RPI OAuth2 Demo</h1>
       <div className="flex gap-4">
-        <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded">
+        <Link
+          href="/login"
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
           Sign In
         </Link>
         <Link href="/dashboard" className="px-4 py-2 border rounded">
@@ -488,52 +497,52 @@ The `@auth/mongodb-adapter` auto-creates and manages four collections in the con
 
 Stores one document per unique identity (one per email address, regardless of which provider was used first).
 
-| Field | Type | Notes |
-|---|---|---|
-| `_id` | `ObjectId` | MongoDB auto-generated |
-| `name` | `string` | From provider profile |
-| `email` | `string` | Unique; used for account linking |
-| `emailVerified` | `Date \| null` | Set if email was verified |
-| `image` | `string` | Provider avatar URL |
+| Field           | Type           | Notes                            |
+| --------------- | -------------- | -------------------------------- |
+| `_id`           | `ObjectId`     | MongoDB auto-generated           |
+| `name`          | `string`       | From provider profile            |
+| `email`         | `string`       | Unique; used for account linking |
+| `emailVerified` | `Date \| null` | Set if email was verified        |
+| `image`         | `string`       | Provider avatar URL              |
 
 ### `accounts`
 
 Stores one document per provider connection. A single `user` can have multiple accounts (Google + GitHub linked to same email).
 
-| Field | Type | Notes |
-|---|---|---|
-| `_id` | `ObjectId` | Auto-generated |
-| `userId` | `ObjectId` | FK → `users._id` |
-| `type` | `string` | `"oauth"` |
-| `provider` | `string` | `"google"` or `"github"` |
-| `providerAccountId` | `string` | Provider's user ID |
-| `access_token` | `string` | OAuth access token |
-| `refresh_token` | `string \| null` | |
-| `expires_at` | `number \| null` | Unix timestamp |
-| `token_type` | `string` | `"Bearer"` |
-| `scope` | `string` | Granted scopes |
-| `id_token` | `string \| null` | OIDC id_token (Google) |
+| Field               | Type             | Notes                    |
+| ------------------- | ---------------- | ------------------------ |
+| `_id`               | `ObjectId`       | Auto-generated           |
+| `userId`            | `ObjectId`       | FK → `users._id`         |
+| `type`              | `string`         | `"oauth"`                |
+| `provider`          | `string`         | `"google"` or `"github"` |
+| `providerAccountId` | `string`         | Provider's user ID       |
+| `access_token`      | `string`         | OAuth access token       |
+| `refresh_token`     | `string \| null` |                          |
+| `expires_at`        | `number \| null` | Unix timestamp           |
+| `token_type`        | `string`         | `"Bearer"`               |
+| `scope`             | `string`         | Granted scopes           |
+| `id_token`          | `string \| null` | OIDC id_token (Google)   |
 
 ### `sessions`
 
 > **Not used with JWT strategy.** If `session.strategy` is changed to `"database"`, the adapter will write session documents here. Left for reference.
 
-| Field | Type | Notes |
-|---|---|---|
-| `_id` | `ObjectId` | |
-| `sessionToken` | `string` | Unique token |
-| `userId` | `ObjectId` | FK → `users._id` |
-| `expires` | `Date` | Session expiry |
+| Field          | Type       | Notes            |
+| -------------- | ---------- | ---------------- |
+| `_id`          | `ObjectId` |                  |
+| `sessionToken` | `string`   | Unique token     |
+| `userId`       | `ObjectId` | FK → `users._id` |
+| `expires`      | `Date`     | Session expiry   |
 
 ### `verification_tokens`
 
 Used for email magic-link flows. Not active in v1 (no email provider), but the collection may be created by the adapter on first run.
 
-| Field | Type | Notes |
-|---|---|---|
-| `identifier` | `string` | Email address |
-| `token` | `string` | Hashed verification token |
-| `expires` | `Date` | Token expiry |
+| Field        | Type     | Notes                     |
+| ------------ | -------- | ------------------------- |
+| `identifier` | `string` | Email address             |
+| `token`      | `string` | Hashed verification token |
+| `expires`    | `Date`   | Token expiry              |
 
 ---
 
@@ -621,15 +630,15 @@ Used for email magic-link flows. Not active in v1 (no email provider), but the c
 
 ## 7. Environment Variables
 
-| Variable | Purpose | How to Obtain | Example |
-|---|---|---|---|
-| `NEXTAUTH_URL` | Canonical URL of the app; used for OAuth redirects | Set to your deployment URL | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | Signing/encryption key for JWTs and cookies | `openssl rand -base64 32` | `K3y+...` (32 random bytes, base64) |
-| `GOOGLE_CLIENT_ID` | OAuth 2.0 client ID for Google provider | [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials | `1234567890-abc.apps.googleusercontent.com` |
-| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 client secret for Google provider | Same credential in Google Cloud Console | `GOCSPX-...` |
-| `GITHUB_CLIENT_ID` | OAuth App client ID for GitHub provider | GitHub → Settings → Developer Settings → OAuth Apps | `Ov23liABCDEF123456` |
-| `GITHUB_CLIENT_SECRET` | OAuth App client secret for GitHub provider | Same OAuth App in GitHub Settings | `abc123def456...` (40 hex chars) |
-| `MONGODB_URI` | MongoDB connection string | MongoDB Atlas → Connect → Drivers | `mongodb+srv://user:pass@cluster.mongodb.net/rpi-oauth2` |
+| Variable               | Purpose                                            | How to Obtain                                                                            | Example                                                  |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `NEXTAUTH_URL`         | Canonical URL of the app; used for OAuth redirects | Set to your deployment URL                                                               | `http://localhost:3000`                                  |
+| `NEXTAUTH_SECRET`      | Signing/encryption key for JWTs and cookies        | `openssl rand -base64 32`                                                                | `K3y+...` (32 random bytes, base64)                      |
+| `GOOGLE_CLIENT_ID`     | OAuth 2.0 client ID for Google provider            | [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials | `1234567890-abc.apps.googleusercontent.com`              |
+| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 client secret for Google provider        | Same credential in Google Cloud Console                                                  | `GOCSPX-...`                                             |
+| `GITHUB_CLIENT_ID`     | OAuth App client ID for GitHub provider            | GitHub → Settings → Developer Settings → OAuth Apps                                      | `Ov23liABCDEF123456`                                     |
+| `GITHUB_CLIENT_SECRET` | OAuth App client secret for GitHub provider        | Same OAuth App in GitHub Settings                                                        | `abc123def456...` (40 hex chars)                         |
+| `MONGODB_URI`          | MongoDB connection string                          | MongoDB Atlas → Connect → Drivers                                                        | `mongodb+srv://user:pass@cluster.mongodb.net/rpi-oauth2` |
 
 `.env.example` (committed to git):
 
@@ -658,16 +667,16 @@ MONGODB_URI=                        # mongodb+srv://<user>:<pass>@<cluster>.mong
 
 ## 8. Security Implementation
 
-| Control | Mechanism | Implementation Detail |
-|---|---|---|
-| CSRF Protection | State parameter + signed cookie | Auth.js v5 generates a cryptographically random `state` value, stores it in an HTTP-only cookie, and validates it on callback. Automatic — no code required. |
-| PKCE | `code_challenge` / `code_verifier` (S256) | Auth.js generates a PKCE pair for every authorization request. Prevents authorization code interception attacks. Automatic for OAuth2 providers. |
-| JWT Encryption | AES-256-GCM (A256GCM) via `jose` | Session JWTs are encrypted (JWE), not just signed. The `NEXTAUTH_SECRET` is the encryption key. Without the secret, the token cannot be read. |
-| Secure Cookies | `HttpOnly`, `SameSite=Lax`, `Secure` | Cookies are HTTP-only (no JS access), preventing XSS-based session theft. `Secure` flag enforced in production. Auth.js sets these automatically. |
-| Secret Management | `.env.local` + `.gitignore` | All credentials stored as environment variables. `.env.local` excluded from version control. `.env.example` provides a safe template. |
-| `callbackUrl` Validation | Host allowlist | Auth.js validates that `callbackUrl` shares the same host as the application, preventing open-redirect attacks. |
-| Account Linking | Email-based matching via adapter | If a user signs in with GitHub using the same email as an existing Google account, the `@auth/mongodb-adapter` links both accounts to the same `users` document. |
-| Dependency Pinning | `next-auth@beta` pinning | Pin the exact beta version in `package.json` to prevent unexpected breaking changes from beta updates. Review release notes on each upgrade. |
+| Control                  | Mechanism                                 | Implementation Detail                                                                                                                                            |
+| ------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CSRF Protection          | State parameter + signed cookie           | Auth.js v5 generates a cryptographically random `state` value, stores it in an HTTP-only cookie, and validates it on callback. Automatic — no code required.     |
+| PKCE                     | `code_challenge` / `code_verifier` (S256) | Auth.js generates a PKCE pair for every authorization request. Prevents authorization code interception attacks. Automatic for OAuth2 providers.                 |
+| JWT Encryption           | AES-256-GCM (A256GCM) via `jose`          | Session JWTs are encrypted (JWE), not just signed. The `NEXTAUTH_SECRET` is the encryption key. Without the secret, the token cannot be read.                    |
+| Secure Cookies           | `HttpOnly`, `SameSite=Lax`, `Secure`      | Cookies are HTTP-only (no JS access), preventing XSS-based session theft. `Secure` flag enforced in production. Auth.js sets these automatically.                |
+| Secret Management        | `.env.local` + `.gitignore`               | All credentials stored as environment variables. `.env.local` excluded from version control. `.env.example` provides a safe template.                            |
+| `callbackUrl` Validation | Host allowlist                            | Auth.js validates that `callbackUrl` shares the same host as the application, preventing open-redirect attacks.                                                  |
+| Account Linking          | Email-based matching via adapter          | If a user signs in with GitHub using the same email as an existing Google account, the `@auth/mongodb-adapter` links both accounts to the same `users` document. |
+| Dependency Pinning       | `next-auth@beta` pinning                  | Pin the exact beta version in `package.json` to prevent unexpected breaking changes from beta updates. Review release notes on each upgrade.                     |
 
 > **Note**: The JWT strategy (vs. database sessions) means session revocation is not possible without token expiry. This is an accepted trade-off for v1. Set a reasonable `maxAge` (default: 30 days) and document the limitation.
 
@@ -677,24 +686,24 @@ MONGODB_URI=                        # mongodb+srv://<user>:<pass>@<cluster>.mong
 
 Tasks are ordered to unblock dependencies as early as possible. Infrastructure must precede UI; type declarations should be in place before writing callbacks.
 
-| Step | Task | Blocks | Rationale |
-|---|---|---|---|
-| 1 | Initialize Next.js project | Everything | Nothing else can start |
-| 2 | Install `next-auth@beta`, `@auth/mongodb-adapter`, `mongodb` | Steps 5–8 | Packages must be available |
-| 3 | Create `.env.local` + `.env.example` | Steps 5, 6 | Auth.js reads env vars at startup (throws if missing) |
-| 4 | Register Google + GitHub OAuth apps; get credentials | Step 3 | Credentials needed in `.env.local` |
-| 5 | Create `src/lib/mongodb.ts` | Step 6 | `auth.ts` imports `clientPromise` |
-| 6 | Create `src/auth.ts` | Steps 7, 8 | Route handler and middleware both import from `auth.ts` |
-| 7 | Create `src/app/api/auth/[...nextauth]/route.ts` | No dependents | Needed for OAuth callbacks to work |
-| 8 | Create `src/middleware.ts` | No dependents | Independent; can be verified via curl/browser |
-| 9 | Create `src/types/next-auth.d.ts` | Steps 11–14 | Type errors in callbacks and pages resolved early |
-| 10 | Create `src/components/providers/session-provider.tsx` | Step 11 | Layout imports it |
-| 11 | Update `src/app/layout.tsx` | Steps 12–14 | SessionProvider must wrap the tree before client hooks work |
-| 12 | Create `src/app/login/page.tsx` | Manual test of sign-in | Sign-in buttons needed to trigger the flow |
-| 13 | Create `src/components/header.tsx` | Steps 13, 14 | Shared across pages |
-| 14 | Create `src/app/dashboard/page.tsx` | Manual test of protection | Validates middleware + session read |
-| 15 | Create `src/app/page.tsx` | No dependents | Landing page; low priority, not on critical path |
-| 16 | Verify `.env.local` in `.gitignore` | Pre-commit | Final safety check before first commit |
+| Step | Task                                                         | Blocks                    | Rationale                                                   |
+| ---- | ------------------------------------------------------------ | ------------------------- | ----------------------------------------------------------- |
+| 1    | Initialize Next.js project                                   | Everything                | Nothing else can start                                      |
+| 2    | Install `next-auth@beta`, `@auth/mongodb-adapter`, `mongodb` | Steps 5–8                 | Packages must be available                                  |
+| 3    | Create `.env.local` + `.env.example`                         | Steps 5, 6                | Auth.js reads env vars at startup (throws if missing)       |
+| 4    | Register Google + GitHub OAuth apps; get credentials         | Step 3                    | Credentials needed in `.env.local`                          |
+| 5    | Create `src/lib/mongodb.ts`                                  | Step 6                    | `auth.ts` imports `clientPromise`                           |
+| 6    | Create `src/auth.ts`                                         | Steps 7, 8                | Route handler and proxy both import from `auth.ts`          |
+| 7    | Create `src/app/api/auth/[...nextauth]/route.ts`             | No dependents             | Needed for OAuth callbacks to work                          |
+| 8    | Create `src/proxy.ts`                                        | No dependents             | Independent; can be verified via curl/browser               |
+| 9    | Create `src/types/next-auth.d.ts`                            | Steps 11–14               | Type errors in callbacks and pages resolved early           |
+| 10   | Create `src/components/providers/session-provider.tsx`       | Step 11                   | Layout imports it                                           |
+| 11   | Update `src/app/layout.tsx`                                  | Steps 12–14               | SessionProvider must wrap the tree before client hooks work |
+| 12   | Create `src/app/login/page.tsx`                              | Manual test of sign-in    | Sign-in buttons needed to trigger the flow                  |
+| 13   | Create `src/components/header.tsx`                           | Steps 13, 14              | Shared across pages                                         |
+| 14   | Create `src/app/dashboard/page.tsx`                          | Manual test of protection | Validates proxy + session read                              |
+| 15   | Create `src/app/page.tsx`                                    | No dependents             | Landing page; low priority, not on critical path            |
+| 16   | Verify `.env.local` in `.gitignore`                          | Pre-commit                | Final safety check before first commit                      |
 
 ---
 
@@ -758,15 +767,15 @@ Manual verification steps in priority order. No automated tests in v1.
 
 ## 11. Known Constraints & Tech Debt
 
-| Item | Severity | Category | Recommended Timeline |
-|---|---|---|---|
-| No automated tests (unit, integration, e2e) | **High** | Quality | v1.1 — add Playwright e2e for login flows and middleware protection |
-| Auth.js v5 is in beta — potential breaking changes | **Medium** | Stability | Pin exact version now; review changelogs before each dependency update |
-| JWT strategy has no server-side session revocation | **Medium** | Security | Acceptable for v1. If revocation is needed: switch to `"database"` strategy or implement a token denylist |
-| Account linking is implicit (email-based) | **Medium** | UX/Security | A user signing in with GitHub who previously used Google with the same email will be silently linked. No UX feedback. Add explicit linking UI in v1.1. |
-| No custom error page for auth failures | **Low** | UX | Auth.js shows a generic error page. Add `src/app/auth/error/page.tsx` in v1.1. |
-| No return URL preservation | **Low** | UX | After redirect to `/login`, the original URL is lost. Implement `callbackUrl` from `searchParams` in v1.1. |
-| No rate limiting on `/api/auth/*` | **Low** | Security | Add middleware-level rate limiting (e.g., `@upstash/ratelimit`) in v1.1 before public exposure. |
-| MongoDB connection retry logic not configured | **Low** | Reliability | The default MongoClient retry behavior is adequate for Atlas. Add explicit `retryWrites=true&w=majority` to the connection string. |
-| `next/image` requires allowed domains config | **Low** | Correctness | Google and GitHub avatar URLs must be added to `remotePatterns` in `next.config.ts` or `<img>` tags will throw at build time. |
-| No RBAC or authorization layer | **Info** | Scope | Out of scope for v1 by design. Document as explicit future work if the project evolves. |
+| Item                                               | Severity   | Category    | Recommended Timeline                                                                                                                                   |
+| -------------------------------------------------- | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No automated tests (unit, integration, e2e)        | **High**   | Quality     | v1.1 — add Playwright e2e for login flows and middleware protection                                                                                    |
+| Auth.js v5 is in beta — potential breaking changes | **Medium** | Stability   | Pin exact version now; review changelogs before each dependency update                                                                                 |
+| JWT strategy has no server-side session revocation | **Medium** | Security    | Acceptable for v1. If revocation is needed: switch to `"database"` strategy or implement a token denylist                                              |
+| Account linking is implicit (email-based)          | **Medium** | UX/Security | A user signing in with GitHub who previously used Google with the same email will be silently linked. No UX feedback. Add explicit linking UI in v1.1. |
+| No custom error page for auth failures             | **Low**    | UX          | Auth.js shows a generic error page. Add `src/app/auth/error/page.tsx` in v1.1.                                                                         |
+| No return URL preservation                         | **Low**    | UX          | After redirect to `/login`, the original URL is lost. Implement `callbackUrl` from `searchParams` in v1.1.                                             |
+| No rate limiting on `/api/auth/*`                  | **Low**    | Security    | Add middleware-level rate limiting (e.g., `@upstash/ratelimit`) in v1.1 before public exposure.                                                        |
+| MongoDB connection retry logic not configured      | **Low**    | Reliability | The default MongoClient retry behavior is adequate for Atlas. Add explicit `retryWrites=true&w=majority` to the connection string.                     |
+| `next/image` requires allowed domains config       | **Low**    | Correctness | Google and GitHub avatar URLs must be added to `remotePatterns` in `next.config.ts` or `<img>` tags will throw at build time.                          |
+| No RBAC or authorization layer                     | **Info**   | Scope       | Out of scope for v1 by design. Document as explicit future work if the project evolves.                                                                |
