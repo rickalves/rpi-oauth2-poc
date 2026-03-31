@@ -123,19 +123,19 @@ Acesse `http://localhost:3000`.
 
 ### Workflow RPI
 
-| Fase RPI  | Status                         |
-| --------- | ------------------------------ |
-| Request   | ✅ Concluído                   |
-| Research  | ✅ Concluído — Veredicto: GO   |
-| Plan      | ✅ Concluído                   |
-| Implement | ✅ Concluído — 17/17 tarefas   |
+| Fase RPI  | Status                       |
+| --------- | ---------------------------- |
+| Request   | ✅ Concluído                 |
+| Research  | ✅ Concluído — Veredicto: GO |
+| Plan      | ✅ Concluído                 |
+| Implement | ✅ Concluído — 17/17 tarefas |
 
 ### Qualidade (oauth2-authentication)
 
-| Gate                              | Resultado                    |
-| --------------------------------- | ---------------------------- |
-| TypeScript (`npm run type-check`) | ✅ 0 erros                    |
-| Lint (`npm run lint`)             | ✅ 0 erros, 0 warnings        |
+| Gate                              | Resultado                       |
+| --------------------------------- | ------------------------------- |
+| TypeScript (`npm run type-check`) | ✅ 0 erros                      |
+| Lint (`npm run lint`)             | ✅ 0 erros, 0 warnings          |
 | Format (`npm run format:check`)   | ✅ Todos os arquivos formatados |
-| Testes Fase 1 (`npm test`)        | ✅ 24/24 passando             |
-| Testes Fase 2–4                  | ⏳ Pendente                   |
+| Testes Fase 1 (`npm test`)        | ✅ 24/24 passando               |
+| Testes Fase 2–4                   | ⏳ Pendente                     |
