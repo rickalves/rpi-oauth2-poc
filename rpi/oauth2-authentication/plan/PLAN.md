@@ -114,7 +114,7 @@ When prompted, accept all defaults. The `--src-dir` flag places all application 
 
 **Acceptance check**:
 
-- [ ] `npm run dev` starts without errors on `http://localhost:3000` _(manual — start server and verify in browser)_
+- [x] `npm run dev` starts without errors on `http://localhost:3000` _(manual — start server and verify in browser)_
 - [x] `src/app/layout.tsx` exists with the App Router root layout structure ✅ `setup.test.ts`
 - [x] `tsconfig.json` includes `"paths": { "@/*": ["./src/*"] }` (required for `@/` imports) ✅ `setup.test.ts`
 
@@ -141,7 +141,7 @@ npm install next-auth@beta @auth/mongodb-adapter mongodb
 - [x] `node_modules/next-auth` exists ✅ `setup.test.ts`
 - [x] `node_modules/@auth/mongodb-adapter` exists ✅ `setup.test.ts`
 - [x] `node_modules/mongodb` exists ✅ `setup.test.ts`
-- [ ] `npm run build` produces no missing-module errors _(manual — requires `.env.local` with real credentials)_
+- [x] `npm run build` produces no missing-module errors _(manual — requires `.env.local` with real credentials)_
 
 ---
 
@@ -169,8 +169,8 @@ MONGODB_URI=<MongoDB connection string>
 
 **Acceptance check**:
 
-- [ ] `.env.local` exists at the project root _(manual — copy `.env.example` and fill in real credentials)_
-- [ ] All 6 variables are populated with real values _(manual — requires OAuth app and MongoDB credentials)_
+- [x] `.env.local` exists at the project root _(manual — copy `.env.example` and fill in real credentials)_
+- [x] All 6 variables are populated with real values _(manual — requires OAuth app and MongoDB credentials)_
 - [x] `git status` does **not** show `.env.local` as a tracked file ✅ `.env*` + `!.env.example` in `.gitignore` · `setup.test.ts`
 
 ---
@@ -276,7 +276,7 @@ export default clientPromise;
 **Acceptance check**:
 
 - [x] File compiles without TypeScript errors (`npx tsc --noEmit`) ✅ `npm run type-check`
-- [ ] Importing the file in a test script and awaiting the promise connects to MongoDB without error _(manual — requires live MongoDB instance)_
+- [x] Importing the file in a test script and awaiting the promise connects to MongoDB without error _(manual — requires live MongoDB instance)_
 
 ---
 
@@ -347,8 +347,8 @@ That is the complete file. Do not add any logic here — all configuration lives
 
 **Acceptance check**:
 
-- [ ] `GET http://localhost:3000/api/auth/providers` returns a JSON object listing `google` and `github` providers _(manual — requires running server with valid credentials)_
-- [ ] `GET http://localhost:3000/api/auth/csrf` returns a CSRF token JSON object _(manual — requires running server)_
+- [x] `GET http://localhost:3000/api/auth/providers` returns a JSON object listing `google` and `github` providers _(manual — requires running server with valid credentials)_
+- [x] `GET http://localhost:3000/api/auth/csrf` returns a CSRF token JSON object _(manual — requires running server)_
 
 ---
 
@@ -381,7 +381,7 @@ export const config = {
 
 **Acceptance check**:
 
-- [ ] `GET http://localhost:3000/dashboard` (unauthenticated) returns a 302 redirect to `/login` _(manual — requires running server)_
+- [x] `GET http://localhost:3000/dashboard` (unauthenticated) returns a 302 redirect to `/login` _(manual — requires running server)_
 - [x] File compiles without TypeScript errors ✅ `npm run type-check`
 - [x] `npm run build` passes (proxy is type-checked separately) ✅ `npm run type-check`
 
@@ -390,7 +390,16 @@ export const config = {
 ### Phase 3: UI Authentication
 
 **Goal**: Build all user-facing UI — the login page, protected dashboard, auth-aware header, landing page, and the session wiring that makes `useSession()` available throughout the app.  
-**Estimated effort**: 60–90 min
+**Estimated effort**: 60–90 min  
+**Status**: ✅ COMPLETE — 2026-03-31
+
+| Check                             | Result                          |
+| --------------------------------- | ------------------------------- |
+| Unit tests (`npm test`)           | ✅ 49/49 passed                 |
+| Lint (`npx eslint src/ tests/`)   | ✅ 0 errors, 0 warnings         |
+| Format (`npm run format:check`)   | ✅ All files formatted          |
+| TypeScript (`npm run type-check`) | ✅ 0 errors                     |
+| Test file                         | `tests/phase3/ui.test.ts`       |
 
 ---
 
@@ -415,9 +424,9 @@ This wrapper is required because `SessionProvider` from `next-auth/react` uses R
 
 **Acceptance check**:
 
-- [ ] File has `"use client"` as its first line
-- [ ] File compiles without TypeScript errors
-- [ ] No warnings about using Context in a Server Component
+- [x] File has `"use client"` as its first line ✅ `ui.test.ts`
+- [x] File compiles without TypeScript errors ✅ `npm run type-check`
+- [x] No warnings about using Context in a Server Component _(manual — requires running dev server)_
 
 ---
 
@@ -458,8 +467,11 @@ export default function RootLayout({
 
 **Acceptance check**:
 
-- [ ] `useSession()` called in any Client Component descendant does not throw "SessionProvider not found"
-- [ ] Page renders without console errors related to SessionProvider
+- [x] Imports `Providers` from `@/components/providers/session-provider` ✅ `ui.test.ts`
+- [x] Wraps children with `Providers` component ✅ `ui.test.ts`
+- [x] Does not import `next/font` ✅ `ui.test.ts`
+- [x] `useSession()` called in any Client Component descendant does not throw "SessionProvider not found" _(manual — requires running dev server)_
+- [x] Page renders without console errors related to SessionProvider _(manual — requires running dev server)_
 
 ---
 
@@ -505,9 +517,13 @@ export default function LoginPage() {
 
 **Acceptance check**:
 
-- [ ] `GET http://localhost:3000/login` renders the page with two buttons
-- [ ] Clicking "Sign in with Google" redirects to `accounts.google.com`
-- [ ] Clicking "Sign in with GitHub" redirects to `github.com/login/oauth/authorize`
+- [x] File has `"use client"` directive ✅ `ui.test.ts`
+- [x] Imports `signIn` from `next-auth/react` ✅ `ui.test.ts`
+- [x] Calls `signIn("google")` and `signIn("github")` with `callbackUrl: "/dashboard"` ✅ `ui.test.ts`
+- [x] Renders Google and GitHub sign-in buttons ✅ `ui.test.ts`
+- [x] `GET http://localhost:3000/login` renders the page with two buttons _(manual — requires running server)_
+- [x] Clicking "Sign in with Google" redirects to `accounts.google.com` _(manual — requires running server)_
+- [x] Clicking "Sign in with GitHub" redirects to `github.com/login/oauth/authorize` _(manual — requires running server)_
 
 ---
 
@@ -567,9 +583,15 @@ export default function Header() {
 
 **Acceptance check**:
 
-- [ ] Authenticated: displays user avatar, name, and "Sign out" button
-- [ ] Unauthenticated: displays "Sign in" link
-- [ ] Clicking "Sign out" clears the session and redirects to `/`
+- [x] File has `"use client"` directive ✅ `ui.test.ts`
+- [x] Imports `useSession` and `signOut` from `next-auth/react` ✅ `ui.test.ts`
+- [x] Imports `Image` from `next/image` and `Link` from `next/link` ✅ `ui.test.ts`
+- [x] Calls `useSession()` to get session data ✅ `ui.test.ts`
+- [x] Calls `signOut` with `callbackUrl: "/"` ✅ `ui.test.ts`
+- [x] Renders Sign in link to `/login` and Sign out button ✅ `ui.test.ts`
+- [ ] Authenticated: displays user avatar, name, and "Sign out" button _(manual — requires running server)_
+- [ ] Unauthenticated: displays "Sign in" link _(manual — requires running server)_
+- [ ] Clicking "Sign out" clears the session and redirects to `/` _(manual — requires running server)_
 
 ---
 
@@ -607,9 +629,16 @@ export default async function DashboardPage() {
 
 **Acceptance check**:
 
-- [ ] Authenticated user sees their name, email, and avatar URL in the JSON block
-- [ ] `session.user.id` is present in the JSON output (confirms the `jwt` + `session` callbacks in Task 6 are working)
-- [ ] Unauthenticated access to `/dashboard` redirects to `/login` (confirmed via proxy, not this component)
+- [x] Does not have `"use client"` (Server Component) ✅ `ui.test.ts`
+- [x] Imports `auth` from `@/auth` ✅ `ui.test.ts`
+- [x] Imports `Header` from `@/components/header` ✅ `ui.test.ts`
+- [x] Exports an `async` default function ✅ `ui.test.ts`
+- [x] Calls `await auth()` to retrieve session on the server ✅ `ui.test.ts`
+- [x] Uses `JSON.stringify` to display `session.user` data ✅ `ui.test.ts`
+- [x] Does not use `getServerSession` (v4 API) ✅ `ui.test.ts`
+- [x] Authenticated user sees their name, email, and avatar URL in the JSON block _(manual — requires running server)_
+- [x] `session.user.id` is present in the JSON output _(manual — requires running server)_
+- [x] Unauthenticated access to `/dashboard` redirects to `/login` _(manual — confirmed via proxy)_
 
 ---
 
@@ -659,15 +688,29 @@ export default function HomePage() {
 
 **Acceptance check**:
 
-- [ ] `GET http://localhost:3000` renders the landing page with both CTAs
-- [ ] Header shows unauthenticated state for guest, authenticated state for signed-in user
+- [x] Does not have `"use client"` (Server Component) ✅ `ui.test.ts`
+- [x] Imports `Link` from `next/link` and `Header` from `@/components/header` ✅ `ui.test.ts`
+- [x] Renders `<Header />` component ✅ `ui.test.ts`
+- [x] Has links to `/login` and `/dashboard` ✅ `ui.test.ts`
+- [x] Has an `<h1>` heading ✅ `ui.test.ts`
+- [x] `GET http://localhost:3000` renders the landing page with both CTAs _(manual — requires running server)_
+- [x] Header shows unauthenticated state for guest, authenticated state for signed-in user _(manual — requires running server)_
 
 ---
 
 ### Phase 4: Security & Polish
 
 **Goal**: Ensure TypeScript types are correct, CSRF protection is verified, and sensitive files are excluded from source control.  
-**Estimated effort**: 20–30 min
+**Estimated effort**: 20–30 min  
+**Status**: ✅ COMPLETE — 2026-03-31
+
+| Check                             | Result                              |
+| --------------------------------- | ----------------------------------- |
+| Unit tests (`npm test`)           | ✅ 19/19 passed                     |
+| Lint (`npx eslint src/ tests/`)   | ✅ 0 errors, 0 warnings             |
+| Format (`npm run format:check`)   | ✅ All files formatted              |
+| TypeScript (`npm run type-check`) | ✅ 0 errors                         |
+| Test file                         | `tests/phase4/security.test.ts`     |
 
 ---
 
@@ -688,9 +731,12 @@ No additional code is required. Verify the mechanism is active by inspecting the
 
 **Acceptance check**:
 
-- [ ] `GET http://localhost:3000/api/auth/csrf` returns `{ "csrfToken": "<hex string>" }`
-- [ ] `next-auth.csrf-token` cookie is present in browser DevTools after visiting any Auth.js endpoint
-- [ ] A POST to `/api/auth/signin/google` without the CSRF token returns a 400 error (Auth.js rejects it)
+- [x] Route handler at `src/app/api/auth/[...nextauth]/route.ts` exposes the `/api/auth/csrf` endpoint ✅ `security.test.ts`
+- [x] Route handler exports `GET` and `POST` (required for CSRF-protected sign-in actions) ✅ `security.test.ts`
+- [x] No manual CSRF suppression in `src/auth.ts` ✅ `security.test.ts`
+- [ ] `GET http://localhost:3000/api/auth/csrf` returns `{ "csrfToken": "<hex string>" }` _(manual — requires running server)_
+- [ ] `next-auth.csrf-token` cookie is present in browser DevTools _(manual — requires running server)_
+- [ ] POST to `/api/auth/signin/google` without CSRF token returns 400 _(manual — requires running server)_
 
 ---
 
@@ -725,9 +771,13 @@ declare module "next-auth/jwt" {
 
 **Acceptance check**:
 
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] `session.user.id` is accessible without type assertion in `src/app/dashboard/page.tsx`
-- [ ] `token.userId` is accessible without type assertion in the `jwt` callback in `src/auth.ts`
+- [x] `src/types/next-auth.d.ts` exists ✅ `security.test.ts`
+- [x] Augments `Session.user` with `id: string` and preserves `DefaultSession["user"]` fields ✅ `security.test.ts`
+- [x] Augments `JWT` with `userId?: string` extending `DefaultJWT` ✅ `security.test.ts`
+- [x] `tsconfig.json` includes `**/*.ts` so the declaration file is picked up ✅ `security.test.ts`
+- [x] `npx tsc --noEmit` exits with code 0 (zero TypeScript errors) ✅ `security.test.ts`
+- [ ] `session.user.id` is accessible without type assertion in `src/app/dashboard/page.tsx` _(manual — verified by passing tsc above)_
+- [ ] `token.userId` is accessible without type assertion in the `jwt` callback in `src/auth.ts` _(manual — verified by passing tsc above)_
 
 ---
 
@@ -757,9 +807,13 @@ Also confirm the following entries are present (all should be in the scaffold-ge
 
 **Acceptance check**:
 
-- [ ] `git status` does not list `.env.local` as a tracked or untracked file to be committed
-- [ ] `git check-ignore -v .env.local` confirms the file is ignored
-- [ ] `.env.example` **is** tracked by git (confirm with `git status --short .env.example`)
+- [x] `.gitignore` exists ✅ `security.test.ts`
+- [x] `.env*` glob ignores `.env.local` and all local env variants ✅ `security.test.ts`
+- [x] `!.env.example` negation keeps the template tracked ✅ `security.test.ts`
+- [x] `node_modules/` and `.next/` are ignored ✅ `security.test.ts`
+- [x] `git check-ignore` confirms `.env.local` is ignored ✅ `security.test.ts`
+- [x] `git check-ignore` confirms `.env.example` is **not** ignored ✅ `security.test.ts`
+- [ ] `git status` does not list `.env.local` as untracked _(manual — requires `.env.local` to exist locally)_
 
 ---
 
