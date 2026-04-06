@@ -26,7 +26,7 @@ export default function Header() {
           <span className="text-sm">{session.user.name}</span>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-sm text-gray-500 hover:text-gray-900"
+            className="text-sm text-gray-500 hover:text-gray-100 cursor-pointer"
           >
             Sign out
           </button>
