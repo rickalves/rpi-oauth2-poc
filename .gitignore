@@ -33,6 +33,7 @@ yarn-error.log*
 # env files — all variants are excluded except the committed template
 .env*
 !.env.example
+!.env.test
 
 # vercel
 .vercel
@@ -43,3 +44,8 @@ next-env.d.ts
 
 scaffold-temp/
 scaffold-empty/
+
+# Playwright
+/test-results/
+/playwright-report/
+tests/e2e/__mongo-state.json
